@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: collective.transcode.daemon
+Version: 0.0dev
+Summary: Video transcoding daemon
+Home-page: https://unweb.me
+Author: unweb.me
+Author-email: we@unweb.me
+License: GPL
+Description: UNKNOWN
+Keywords: video transcoding flv plone zope
+Platform: UNKNOWN
