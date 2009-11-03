@@ -26,6 +26,4 @@ You'll have to change the profiles list. On buildout.cfg, upon transcodedaemon s
 
 Todo
 ============
-* Use xml conf to create video path
-* Better video URL (path/origfile.avi/profileid/filename.flv)
 
