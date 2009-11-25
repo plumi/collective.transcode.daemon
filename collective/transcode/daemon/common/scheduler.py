@@ -28,7 +28,7 @@ Based on Darksnow ConvertDaemon by Jean-Nicolas Bès <jean.nicolas.bes@darksnow.
 #
 
 
-import time
+import time, os
 from sha import sha
 
 from twisted.internet import reactor
@@ -41,11 +41,12 @@ from twisted.python.timeoutqueue import TimeoutQueue
 from utils import systemOut
 
 class Job(dict):
-    def __init__(self, input, output, options, **kwargs):
+    def __init__(self, input, output, profile, options, **kwargs):
         dict.__init__(self)
         self.input=input
         self.output=output
         self.options=options
+	self.profile=profile
         self.defer = Deferred()
         for key,value in kwargs.items():
             self[key]=value
@@ -69,14 +70,8 @@ class JobSched:
     
     def addjob(self,job):
         #print "Scheduler addJob", job
-        #trans = self.getmimeconv(job.input['type'], job.output['type'])
-        #if not trans:
-        #    print "Transcoding not available from %s to %s." % (
-        #        job.input['type'],
-        #        job.output['type']
-        #        )
-        #    return None
-        #job.trans = trans
+        job.cmd = job.profile['cmd'] % (job.input['path'], job.output['path'])
+        
         UJId=self.genUJId()
         self.job[UJId]=job
         job.UJId=UJId
@@ -87,6 +82,11 @@ class JobSched:
         del self.job[UJId]
     
     def run(self):
+	import imp
+	config = imp.load_source('config',self.rel("config.py"))
+	self.host = config.listen_host
+	self.port = config.listen_port
+
         print "Scheduler thread running"
         self.running=True
         while self.running:
@@ -98,14 +98,17 @@ class JobSched:
                 print "ERROR the job doesn't exist"
                 continue
             try:
-                ret = self.transcoder[job.trans].transcode(job)
+		ret = os.system(job.cmd)
             except Exception, e:
                 ret = "%s" % e
                 print "EXCEPTION %s CATCHED FOR %r" % (ret, job)
-            #print "Transcoder returned", ret
-            if ret and getattr(job, 'url', None):
+            print "Transcoder returned", ret, job.output
+       
+	    if ret == 0: 
+		retURL = "http://%s:%s/%s" % (self.host, self.port, job.output['path'])
+                print retURL
+		reactor.callFromThread(job.defer.callback, retURL)
+	    else:
                 reactor.callFromThread(job.defer.errback, ret)
-            else:
-                reactor.callFromThread(job.defer.callback, ret)
-  
+            
 

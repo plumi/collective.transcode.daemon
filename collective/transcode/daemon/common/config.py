@@ -12,12 +12,13 @@ default_supported_mimetypes = [ 'video/mpeg',
 				'video/quicktime', 
 				'video/x-la-asf', 
 				'video/x-ms-asf', 
-				'video/x-msvideo'
+				'video/x-msvideo',
+				'video/mp4',
 			      ]
 
 profiles = [
 		{'id' : 'low', 
-		 'cmd' : 'ffmpeg -y -i %s -s 425x344 -qscale 5.0 -r 30 -ar 44100 -f flv %s', 
+		 'cmd' : 'ffmpeg -y -i %s -s 424x344 -qscale 5.0 -r 30 -ar 44100 -f flv %s', 
 		 'supported_mime_types': default_supported_mimetypes,
 		}, 
 		{'id' : 'high', 

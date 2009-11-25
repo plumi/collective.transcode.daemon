@@ -27,6 +27,11 @@ Copyright (c) 2009 unweb.me
 
 """
 
+"""
+$Id$
+"""
+
+import os
 import xmlrpclib
 from twisted.internet import reactor
 from twisted.web2 import xmlrpc
@@ -52,17 +57,29 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
     
     def xmlrpc_getAvailableProfiles(self, request):
 	ret = [i['id'] for i in self.master.config['profiles']]
+	print ret
 	return ret
 
-    def xmlrpc_convert(self,  request, input, profile, options, callbackURL):
+    def xmlrpc_convert(self,  request, input, profileId, options, callbackURL):
         inURL = input['path']
 	videofolder = self.master.config['videofolder']
 	splittedURL = inURL.split('/')[2:]
-	path = videofolder + '/' + '/'.join(splittedURL) + '/' + profile 
-	os.makedirs(path)	
-	outFile = path + '.'.join(inURL.split('/')[-1].split('.')[:-1]) + '.flv'
+	path = videofolder + '/' + '/'.join(splittedURL) + '/' + profileId
+	try:
+	    os.makedirs(path)
+	except:
+	    pass	
+	outFile = path + '/' + '.'.join(inURL.split('/')[-1].split('.')[:-1]) + '.flv'
         output = dict(path=outFile,type='video/x-flv')
-        job = Job(input, output, options, callbackURL=callbackURL)
+	profile = None
+	for p in self.master.config['profiles']:
+            if profileId == p['id']: profile = p	
+	if not profile:
+            return "ERROR: Invalid profile %s" % profileId
+	
+	if input['type'] not in profile['supported_mime_types']:
+	    return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
+        job = Job(input, output, profile, options, callbackURL=callbackURL)
         job.defer.addCallback(self.callback, job)
         job.defer.addErrback(self.errback, job)
         jobid = self.master.addjob(job)

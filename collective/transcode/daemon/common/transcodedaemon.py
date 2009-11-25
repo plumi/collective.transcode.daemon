@@ -99,9 +99,8 @@ class TranscodeDaemon(JobSched):
         
         self.transcoder={}
 
-	import sys
-	sys.path.append(self.rel(""))
-	import config
+	import imp
+	config = imp.load_source('config',self.rel("config.py"))
 	self.config = {}
 	self.config['profiles'] = eval(config.profiles)
 	self.config['listen_host'] = config.listen_host
