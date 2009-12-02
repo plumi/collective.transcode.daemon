@@ -56,32 +56,32 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         self.master = master
     
     def xmlrpc_getAvailableProfiles(self, request):
-	ret = [i['id'] for i in self.master.config['profiles']]
-	print ret
-	return ret
+        ret = [i['id'] for i in self.master.config['profiles']]
+        print ret
+        return ret
 
     def xmlrpc_convert(self,  request, input, profileId, options, callbackURL):
         inURL = input['path']
-	videofolder = self.master.config['videofolder']
-	splittedURL = inURL.split('/')[2:]
-	path = videofolder + '/' + '/'.join(splittedURL) + '/' + profileId
-	try:
-	    os.makedirs(path)
-	except:
-	    pass	
-	outFile = path + '/' + '.'.join(inURL.split('/')[-1].split('.')[:-1]) + '.flv'
+        videofolder = self.master.config['videofolder']
+        splittedURL = inURL.split('/')[2:]
+        path = videofolder + '/' + '/'.join(splittedURL) + '/' + profileId
+        try:
+            os.makedirs(path)
+        except:
+            pass        
+        outFile = path + '/' + '.'.join(inURL.split('/')[-1].split('.')[:-1]) + '.flv'
         output = dict(path=outFile,type='video/x-flv')
-	profile = None
-	for p in self.master.config['profiles']:
-            if profileId == p['id']: profile = p	
-	if not profile:
+        profile = None
+        for p in self.master.config['profiles']:
+            if profileId == p['id']: profile = p        
+        if not profile:
             return "ERROR: Invalid profile %s" % profileId
-	
-	if input['type'] not in profile['supported_mime_types']:
-	    return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
+        
+        if input['type'] not in profile['supported_mime_types']:
+            return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
         job = Job(input, output, profile, options, callbackURL=callbackURL)
-        job.defer.addCallback(self.callback, job)
-        job.defer.addErrback(self.errback, job)
+        job.defer.addBoth(self.callback, job)
+#        job.defer.addErrback(self.callback, job)
         jobid = self.master.addjob(job)
         if not jobid:
             return "ERROR couldn't get a jobid"
@@ -105,13 +105,17 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         print "called back!"
         print "callbackURL =",job['callbackURL']
         server=xmlrpclib.Server(job['callbackURL'])
-        server.conv_done_xmlrpc(ret)
+        vals = ret.split()
+        if vals[0] == 'SUCCESS':
+            server.conv_done_xmlrpc(0, 'SUCCESS', job.profile.id, vals[1])
+        else:
+            server.conv_done_xmlrpc(vals[1], vals[0], job.profile.id, '')
         return True
 
-    def errback(self, ret, job):
-        print "errored back!"
-        print "callbackURL =",job['callbackURL']
-        server=xmlrpclib.Server(job['callbackURL'])
-        server.conv_done_xmlrpc(ret)
-        return True
-
+#    def errback(self, ret, job):
+#        print "errored back!"
+#        print "callbackURL =",job['callbackURL']
+#        server=xmlrpclib.Server(job['callbackURL'])
+#        server.conv_done_xmlrpc(ret)
+#        return True
+#

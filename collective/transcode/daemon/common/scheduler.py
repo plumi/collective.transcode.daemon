@@ -46,7 +46,7 @@ class Job(dict):
         self.input=input
         self.output=output
         self.options=options
-	self.profile=profile
+        self.profile=profile
         self.defer = Deferred()
         for key,value in kwargs.items():
             self[key]=value
@@ -82,10 +82,10 @@ class JobSched:
         del self.job[UJId]
     
     def run(self):
-	import imp
-	config = imp.load_source('config',self.rel("config.py"))
-	self.host = config.listen_host
-	self.port = config.listen_port
+        import imp
+        config = imp.load_source('config',self.rel("config.py"))
+        self.host = config.listen_host
+        self.port = config.listen_port
 
         print "Scheduler thread running"
         self.running=True
@@ -98,17 +98,18 @@ class JobSched:
                 print "ERROR the job doesn't exist"
                 continue
             try:
-		ret = os.system(job.cmd)
+                ret = os.system(job.cmd)
             except Exception, e:
                 ret = "%s" % e
-                print "EXCEPTION %s CATCHED FOR %r" % (ret, job)
+                print "EXCEPTION %s CAUGHT FOR %r" % (ret, job)
             print "Transcoder returned", ret, job.output
        
-	    if ret == 0: 
-		retURL = "http://%s:%s/%s" % (self.host, self.port, job.output['path'])
+            if ret == 0: 
+                retURL = "http://%s:%s/%s" % (self.host, self.port, job.output['path'])
                 print retURL
-		reactor.callFromThread(job.defer.callback, retURL)
-	    else:
-                reactor.callFromThread(job.defer.errback, ret)
+                reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retURL)
+            else:
+                #TODO - make more useful message
+                reactor.callFromThread(job.defer.errback, 'FAIL %d' % ret)
             
 
