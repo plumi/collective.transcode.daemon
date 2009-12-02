@@ -33,6 +33,7 @@ $Id$
 
 import os
 import xmlrpclib
+import urllib
 from twisted.internet import reactor
 from twisted.web2 import xmlrpc
 from scheduler import Job
@@ -61,7 +62,7 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         return ret
 
     def xmlrpc_convert(self,  request, input, profileId, options, callbackURL):
-        inURL = input['path']
+        inURL = urllib.quote(input['path'])
         videofolder = self.master.config['videofolder']
         splittedURL = inURL.split('/')[2:]
         path = videofolder + '/' + '/'.join(splittedURL) + '/' + profileId
