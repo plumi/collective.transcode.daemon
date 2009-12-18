@@ -98,6 +98,7 @@ class JobSched:
                 print "ERROR the job doesn't exist"
                 continue
             try:
+                print "RUNNING: %s" % job.cmd
                 ret = os.system(job.cmd)
             except Exception, e:
                 ret = "%s" % e

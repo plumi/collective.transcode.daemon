@@ -70,13 +70,13 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
             os.makedirs(path)
         except:
             pass        
-        outFile = path + '/' + '.'.join(inURL.split('/')[-1].split('.')[:-1]) + '.flv'
-        output = dict(path=outFile,type='video/x-flv')
         profile = None
         for p in self.master.config['profiles']:
             if profileId == p['id']: profile = p        
         if not profile:
             return "ERROR: Invalid profile %s" % profileId
+        outFile = path + '/' + '.'.join(inURL.split('/')[-1].split('.')[:-1]) + '.' + profile['output_extension']
+        output = dict(path=outFile,type=profile['output_mime_type'])
         
         if input['type'] not in profile['supported_mime_types']:
             return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
@@ -103,14 +103,15 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         return True
     
     def callback(self, ret, job):
-        print "called back!"
+        print "called back plone"
         print "callbackURL =",job['callbackURL']
+        print "callback return for profile %s is %s" %(job.profile['id'],ret)
         server=xmlrpclib.Server(job['callbackURL'])
         vals = ret.split()
         if vals[0] == 'SUCCESS':
-            server.conv_done_xmlrpc(0, 'SUCCESS', job.profile.id, vals[1])
+            server.conv_done_xmlrpc(0, 'SUCCESS', job.profile['id'], vals[1])
         else:
-            server.conv_done_xmlrpc(vals[1], vals[0], job.profile.id, '')
+            server.conv_done_xmlrpc(vals[1], vals[0], job.profile['id'], '')
         return True
 
 #    def errback(self, ret, job):
