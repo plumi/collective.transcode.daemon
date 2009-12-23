@@ -39,6 +39,7 @@ from twisted.internet.defer import Deferred
 from twisted.python.timeoutqueue import TimeoutQueue
 
 from utils import systemOut
+import urllib
 
 class Job(dict):
     def __init__(self, input, output, profile, options, **kwargs):
@@ -70,7 +71,6 @@ class JobSched:
     
     def addjob(self,job):
         #print "Scheduler addJob", job
-        job.cmd = job.profile['cmd'] % (job.input['path'], job.output['path'])
         
         UJId=self.genUJId()
         self.job[UJId]=job
@@ -98,8 +98,15 @@ class JobSched:
                 print "ERROR the job doesn't exist"
                 continue
             try:
+                print "DOWNLOADING %s" % job.input['path']
+                (filename, response) = urllib.urlretrieve(job.input['path'])
+                #TODO - check file was retrieved successfully
+                job.cmd = job.profile['cmd'] % (filename, job.output['path'])
+                #TODO - make this nicer with caching (needs hashing on both side)
+
                 print "RUNNING: %s" % job.cmd
                 ret = os.system(job.cmd)
+                os.remove(filename)
             except Exception, e:
                 ret = "%s" % e
                 print "EXCEPTION %s CAUGHT FOR %r" % (ret, job)

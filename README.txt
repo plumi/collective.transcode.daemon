@@ -26,4 +26,6 @@ You'll have to change the profiles list. On buildout.cfg, upon transcodedaemon s
 
 Todo
 ============
-
+Implement caching of downloads from the originating server. This will need to 
+server to provide an md5sum (or other hash) of the original file so we won't
+have to download it once for each profile (as is done now)
