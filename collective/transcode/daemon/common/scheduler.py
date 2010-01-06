@@ -113,9 +113,9 @@ class JobSched:
             print "Transcoder returned", ret, job.output
        
             if ret == 0: 
-                retURL = "http://%s:%s/%s" % (self.host, self.port, job.output['path'])
-                print retURL
-                reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retURL)
+                retPath = job.output['path']
+                print retPath
+                reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
             else:
                 #TODO - make more useful message
                 reactor.callFromThread(job.defer.errback, 'FAIL %d' % ret)
