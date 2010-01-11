@@ -34,6 +34,7 @@ $Id$
 import os
 import xmlrpclib
 import urllib
+from urlparse import urlparse
 from twisted.internet import reactor
 from twisted.web2 import xmlrpc
 from scheduler import Job
@@ -62,10 +63,23 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         return ret
 
     def xmlrpc_convert(self,  request, input, profileId, options, callbackURL):
-        inURL = urllib.quote(input['path'])
         videofolder = self.master.config['videofolder']
-        splittedURL = inURL.split('/')[2:]
-        path = videofolder + '/' + '/'.join(splittedURL) + '/' + profileId
+
+        #This cleans up unsavoury characters from the path name. A video coming
+        #from a URL such as https://local-server:9080/plone/foo/bar will
+        #get stored in a directory .../https/local-server/9080/plone/foo/bar/...
+        parsedURL = urlparse(input['path'])
+        hostport = '/'.join(parsedURL[1].split(':'))
+        path = videofolder + '/' + \
+                parsedURL[0] + '/' + \
+                hostport + \
+                parsedURL[2] + '/' + \
+                profileId
+
+        #grabs the basename of the file: http://foo/bar/baz.foo.avi would
+        #yield baz.foo
+        basename = '.'.join(input['path'].split('/')[-1].split('.')[:-1])
+
         try:
             os.makedirs(path)
         except:
@@ -75,7 +89,7 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
             if profileId == p['id']: profile = p        
         if not profile:
             return "ERROR: Invalid profile %s" % profileId
-        outFile = path + '/' + '.'.join(inURL.split('/')[-1].split('.')[:-1]) + '.' + profile['output_extension']
+        outFile = path + '/' + basename + '.' + profile['output_extension']
         output = dict(path=outFile,type=profile['output_mime_type'])
         
         if input['type'] not in profile['supported_mime_types']:
