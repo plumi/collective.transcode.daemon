@@ -92,7 +92,9 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         outFile = path + '/' + basename + '.' + profile['output_extension']
         output = dict(path=outFile,type=profile['output_mime_type'])
         
-        if input['type'] not in profile['supported_mime_types']:
+        #if supported_mime_types is empty, we don't check the mime type
+        if len(profile['supported_mime_types']) and \
+           input['type'] not in profile['supported_mime_types']:
             return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
         job = Job(input, output, profile, options, callbackURL=callbackURL)
         job.defer.addBoth(self.callback, job)
