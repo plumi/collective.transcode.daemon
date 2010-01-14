@@ -55,7 +55,7 @@ class Transcoder(object):
             self.logRegex.append((re.compile(rex),func))
     
     def start(self, cmd):
-		print "cmd %s" % cmd
+        print "cmd %s" % cmd
         cmdObj = Popen3(cmd, True)
         cmdRet=-1
         while cmdRet == -1:

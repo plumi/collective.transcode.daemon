@@ -99,13 +99,13 @@ class TranscodeDaemon(JobSched):
         
         self.transcoder={}
 
-	import imp
-	config = imp.load_source('config',self.rel("config.py"))
-	self.config = {}
-	self.config['profiles'] = eval(config.profiles)
-	self.config['listen_host'] = config.listen_host
-	self.config['listen_port'] = config.listen_port
-	self.config['videofolder'] = config.videofolder
+        import imp
+        config = imp.load_source('config',self.rel("config.py"))
+        self.config = {}
+        self.config['profiles'] = eval(config.profiles)
+        self.config['listen_host'] = config.listen_host
+        self.config['listen_port'] = config.listen_port
+        self.config['videofolder'] = config.videofolder
 
         self.launchHttp(application)
         reactor.callInThread(self.run)
@@ -115,7 +115,7 @@ class TranscodeDaemon(JobSched):
     def launchHttp(self, application):
         root = TranscodeWebRoot()
         root.putChild('RPC2', XMLRPCConvert(self))
-	root.putChild('videos',static.File(self.config['videofolder']))
+        root.putChild(self.config['videofolder'],static.File(self.config['videofolder']))
         site = server.Site(root)
         
         httpchan = channel.HTTPFactory(site)
