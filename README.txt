@@ -16,7 +16,7 @@ On buildout.cfg, upon transcodedaemon section, the following settings can be con
 
 listen_host=locahost #ip or hostname to listen
 listen_port=8888     #port to use
-videofolder=videos   #path of folder where transcoded videos are stored
+videofolder=transcoded   #path of folder where transcoded videos are stored
 
  
 How can I change the quality and format of the transcoded files
@@ -29,3 +29,8 @@ Todo
 Implement caching of downloads from the originating server. This will need to 
 server to provide an md5sum (or other hash) of the original file so we won't
 have to download it once for each profile (as is done now)
+
+
+Authors
+============
+Unweb.me, https://unweb.me
