@@ -30,27 +30,50 @@ Based on Darksnow ConvertDaemon by Jean-Nicolas Bès <jean.nicolas.bes@darksnow.
 
 import time, os
 from sha import sha
+from Queue import Queue
+from utils import systemOut
+import urllib
+from urlparse import urlparse
 
 from twisted.internet import reactor
 from twisted.python import threadable
 threadable.init(1)
 from twisted.internet.defer import Deferred
 
-from twisted.python.timeoutqueue import TimeoutQueue
-
-from utils import systemOut
-import urllib
 
 class Job(dict):
     def __init__(self, input, output, profile, options, **kwargs):
         dict.__init__(self)
-        self.input=input
-        self.output=output
-        self.options=options
-        self.profile=profile
+        self.input = input
+        self.output = output
+        self.options = options
+        self.profile = profile
         self.defer = Deferred()
         for key,value in kwargs.items():
-            self[key]=value
+            self[key] = value
+
+        #This cleans up unsavoury characters from the path name. A video coming
+        #from a URL such as https://local-server:9080/plone/foo/bar will
+        #get stored in a directory .../https/local-server/9080/plone/foo/bar/...
+        parsedURL = urlparse(self.input['path'])
+        hostport = '/'.join(parsedURL[1].split(':'))
+        path = self['videofolder'] + '/' + \
+                parsedURL[0] + '/' + \
+                hostport + \
+                parsedURL[2] + '/' + \
+                self.profile['id']
+        try:
+            os.makedirs(path)
+        except:
+            pass
+
+        #grabs the basename of the file: http://foo/bar/baz.foo.avi would
+        #yield baz.foo
+        basename = '.'.join(input['path'].split('/')[-1].split('.')[:-1])
+        if not basename:
+            basename = input['path'].split('/')[-1]
+        outFile = path + '/' + basename + '.' + profile['output_extension']
+        self.output = dict(path=outFile,type=profile['output_mime_type'])
     
     def __repr__(self):
         return "<Job input=%r ouput=%r options=%r %s" % (
@@ -63,15 +86,13 @@ class Job(dict):
 class JobSched:
   
     def __init__(self):
-        self.queue=TimeoutQueue()
+        self.queue=Queue()
         self.job={}
     
     def genUJId(self):
         return sha(str(time.time())).digest()
     
     def addjob(self,job):
-        #print "Scheduler addJob", job
-        
         UJId=self.genUJId()
         self.job[UJId]=job
         job.UJId=UJId
@@ -82,11 +103,6 @@ class JobSched:
         del self.job[UJId]
     
     def run(self):
-        import imp
-        config = imp.load_source('config',self.rel("config.py"))
-        self.host = config.listen_host
-        self.port = config.listen_port
-
         print "Scheduler thread running"
         self.running=True
         while self.running:
@@ -97,13 +113,15 @@ class JobSched:
             if job.UJId not in self.job:
                 print "ERROR the job doesn't exist"
                 continue
+
+            url = job.input['path']
+
+            ret = 1
             try:
-                print "DOWNLOADING %s" % job.input['path']
-                (filename, response) = urllib.urlretrieve(job.input['path'])
+                print "DOWNLOADING %s" % url
+                (filename, response) = urllib.urlretrieve(url)
                 #TODO - check file was retrieved successfully
                 job.cmd = job.profile['cmd'] % (filename, job.output['path'])
-                #TODO - make this nicer with caching (needs hashing on both side)
-
                 print "RUNNING: %s" % job.cmd
                 ret = os.system(job.cmd)
                 os.remove(filename)
@@ -118,6 +136,6 @@ class JobSched:
                 reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
             else:
                 #TODO - make more useful message
-                reactor.callFromThread(job.defer.errback, 'FAIL %d' % ret)
+                reactor.callFromThread(job.defer.errback, 'FAIL %s' % ret)
             
 

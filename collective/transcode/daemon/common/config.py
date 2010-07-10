@@ -1,6 +1,7 @@
 listen_host='localhost'
 listen_port='8888'
 videofolder='videos'
+secret='secret'
 
 default_supported_mimetypes = [ 'video/mpeg', 
                 'video/3gpp', 

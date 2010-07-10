@@ -34,7 +34,6 @@ $Id$
 import os
 import xmlrpclib
 import urllib
-from urlparse import urlparse
 from twisted.internet import reactor
 from twisted.web2 import xmlrpc
 from scheduler import Job
@@ -62,41 +61,20 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         print ret
         return ret
 
-    def xmlrpc_convert(self,  request, input, profileId, options, callbackURL):
-        videofolder = self.master.config['videofolder']
-
-        #This cleans up unsavoury characters from the path name. A video coming
-        #from a URL such as https://local-server:9080/plone/foo/bar will
-        #get stored in a directory .../https/local-server/9080/plone/foo/bar/...
-        parsedURL = urlparse(input['path'])
-        hostport = '/'.join(parsedURL[1].split(':'))
-        path = videofolder + '/' + \
-                parsedURL[0] + '/' + \
-                hostport + \
-                parsedURL[2] + '/' + \
-                profileId
-
-        #grabs the basename of the file: http://foo/bar/baz.foo.avi would
-        #yield baz.foo
-        basename = '.'.join(input['path'].split('/')[-1].split('.')[:-1])
-
-        try:
-            os.makedirs(path)
-        except:
-            pass        
+    def xmlrpc_convert(self, request, input, profileId, options, callbackURL):
         profile = None
         for p in self.master.config['profiles']:
-            if profileId == p['id']: profile = p        
+            if profileId == p['id']: 
+                profile = p        
         if not profile:
             return "ERROR: Invalid profile %s" % profileId
-        outFile = path + '/' + basename + '.' + profile['output_extension']
-        output = dict(path=outFile,type=profile['output_mime_type'])
         
         #if supported_mime_types is empty, we don't check the mime type
         if len(profile['supported_mime_types']) and \
            input['type'] not in profile['supported_mime_types']:
             return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
-        job = Job(input, output, profile, options, callbackURL=callbackURL)
+        output = {}
+        job = Job(input, output, profile, options, callbackURL=callbackURL, videofolder=self.master.config['videofolder'], )
         job.defer.addBoth(self.callback, job)
 #        job.defer.addErrback(self.callback, job)
         jobid = self.master.addjob(job)
