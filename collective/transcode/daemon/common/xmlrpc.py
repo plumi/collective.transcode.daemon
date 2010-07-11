@@ -37,6 +37,8 @@ import urllib
 from twisted.internet import reactor
 from twisted.web2 import xmlrpc
 from scheduler import Job
+from base64 import b64decode, b64encode
+from crypto import decrypt, encrypt
 
 def hex(bytes):
     hexbytes = ""
@@ -61,22 +63,29 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         print ret
         return ret
 
-    def xmlrpc_convert(self, request, input, profileId, options, callbackURL, errbackURL=None):
+    def xmlrpc_transcode(self, request, input, profileId, options, callbackURL, fieldName=''):
         profile = None
         for p in self.master.config['profiles']:
             if profileId == p['id']: 
                 profile = p        
         if not profile:
             return "ERROR: Invalid profile %s" % profileId
+
+        try:
+            key = decrypt(b64decode(input['key']), self.master.config['secret']) 
+            input = eval(key, {"__builtins__":None},{})
+            assert input.__class__ is dict
+        except Exception, e:
+            print "Invalid transcode request: %s" % e
+            return "ERROR: Unauthorized"
         
         #if supported_mime_types is empty, we don't check the mime type
         if len(profile['supported_mime_types']) and \
            input['type'] not in profile['supported_mime_types']:
             return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
         output = {}
-        job = Job(input, output, profile, options, callbackURL=callbackURL, errbackURL=errbackURL, videofolder=self.master.config['videofolder'], )
+        job = Job(input, output, profile, options, callbackURL=callbackURL, videofolder=self.master.config['videofolder'], fieldName=fieldName )
         job.defer.addBoth(self.callback, job)
-        job.defer.addErrback(self.errback, job)
         jobid = self.master.addjob(job)
         if not jobid:
             return "ERROR: couldn't get a jobid"
@@ -100,19 +109,17 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         return True
     
     def callback(self, ret, job):
-        print "callbackURL =",job['callbackURL']
-        print "callback return for profile %s is %s" %(job.profile['id'],ret)
+        print "callback return for jobId %s profile %s is %s" %(b64encode(job.UJId), job.profile['id'],ret)
         server = xmlrpclib.Server(job['callbackURL'])
         vals = ret.split()
-        if vals[0] == 'SUCCESS':
-            server.conv_done_xmlrpc(0, 'SUCCESS', job.profile['id'], vals[1])
-        else:
-            server.conv_done_xmlrpc(vals[1], vals[0], job.profile['id'], '')
-        return True
-
-    def errback(self, ret, job):
-        print "errored back!"
-        print "errbackURL =" , job['errbackURL']
-        server = xmlrpclib.Server(job['errbackURL'])
-        server.conv_done_xmlrpc(ret)
+        key = { 
+                  'jobId' : job.UJId,
+                  'UID' : job.input['uid'],
+                  'fieldName' : job.input['fieldName'], 
+                  'profile' : job.profile['id'],
+                  'path' : vals[0] == 'SUCCESS' and vals[1] or '',
+                  'msg' : ret,
+              }
+        output = { 'key' : b64encode(encrypt(str(key), self.master.config['secret'])) }
+        server.transcode_callback(output)
         return True

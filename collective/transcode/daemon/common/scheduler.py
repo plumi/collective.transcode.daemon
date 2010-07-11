@@ -57,21 +57,23 @@ class Job(dict):
         #get stored in a directory .../https/local-server/9080/plone/foo/bar/...
         parsedURL = urlparse(self.input['path'])
         hostport = '/'.join(parsedURL[1].split(':'))
+        if input['fieldName']:
+            field = '%s/' % input['fieldName']
+        else:
+            field = ''
         path = self['videofolder'] + '/' + \
                 parsedURL[0] + '/' + \
                 hostport + \
                 parsedURL[2] + '/' + \
-                self.profile['id']
+                field + self.profile['id']
         try:
             os.makedirs(path)
         except:
             pass
 
-        #grabs the basename of the file: http://foo/bar/baz.foo.avi would
-        #yield baz.foo
-        basename = '.'.join(input['path'].split('/')[-1].split('.')[:-1])
-        if not basename:
-            basename = input['path'].split('/')[-1]
+        #grabs the basename of the file
+        fileName = input.get('fileName', None) or input['path'].split('/')[-1]
+        basename = '.'.join(fileName.split('.')[:-1]) or fileName
         outFile = path + '/' + basename + '.' + profile['output_extension']
         self.output = dict(path=outFile,type=profile['output_mime_type'])
     
@@ -132,7 +134,6 @@ class JobSched:
        
             if ret == 0: 
                 retPath = job.output['path']
-                print retPath
                 reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
             else:
                 #TODO - make more useful message

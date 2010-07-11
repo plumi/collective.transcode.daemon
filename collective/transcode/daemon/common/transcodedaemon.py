@@ -106,6 +106,7 @@ class TranscodeDaemon(JobSched):
         self.config['listen_host'] = config.listen_host
         self.config['listen_port'] = config.listen_port
         self.config['videofolder'] = config.videofolder
+        self.config['secret'] = config.secret
 
         self.launchHttp(application)
         reactor.callInThread(self.run)
