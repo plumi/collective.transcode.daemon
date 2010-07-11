@@ -61,7 +61,7 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         print ret
         return ret
 
-    def xmlrpc_convert(self, request, input, profileId, options, callbackURL):
+    def xmlrpc_convert(self, request, input, profileId, options, callbackURL, errbackURL=None):
         profile = None
         for p in self.master.config['profiles']:
             if profileId == p['id']: 
@@ -74,16 +74,19 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
            input['type'] not in profile['supported_mime_types']:
             return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
         output = {}
-        job = Job(input, output, profile, options, callbackURL=callbackURL, videofolder=self.master.config['videofolder'], )
+        job = Job(input, output, profile, options, callbackURL=callbackURL, errbackURL=errbackURL, videofolder=self.master.config['videofolder'], )
         job.defer.addBoth(self.callback, job)
-#        job.defer.addErrback(self.callback, job)
+        job.defer.addErrback(self.errback, job)
         jobid = self.master.addjob(job)
         if not jobid:
-            return "ERROR couldn't get a jobid"
+            return "ERROR: couldn't get a jobid"
         if callbackURL:
             return hex(jobid)
         else:
             return job.defer
+
+    def xmlrpc_queueSize(self, request):
+        return self.master.queue.qsize()
     
     def xmlrpc_stat(self, request, UJId):
         return "ok"
@@ -97,10 +100,9 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         return True
     
     def callback(self, ret, job):
-        print "called back plone"
         print "callbackURL =",job['callbackURL']
         print "callback return for profile %s is %s" %(job.profile['id'],ret)
-        server=xmlrpclib.Server(job['callbackURL'])
+        server = xmlrpclib.Server(job['callbackURL'])
         vals = ret.split()
         if vals[0] == 'SUCCESS':
             server.conv_done_xmlrpc(0, 'SUCCESS', job.profile['id'], vals[1])
@@ -108,10 +110,9 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
             server.conv_done_xmlrpc(vals[1], vals[0], job.profile['id'], '')
         return True
 
-#    def errback(self, ret, job):
-#        print "errored back!"
-#        print "callbackURL =",job['callbackURL']
-#        server=xmlrpclib.Server(job['callbackURL'])
-#        server.conv_done_xmlrpc(ret)
-#        return True
-#
+    def errback(self, ret, job):
+        print "errored back!"
+        print "errbackURL =" , job['errbackURL']
+        server = xmlrpclib.Server(job['errbackURL'])
+        server.conv_done_xmlrpc(ret)
+        return True
