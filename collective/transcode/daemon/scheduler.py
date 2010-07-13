@@ -116,7 +116,7 @@ class JobSched:
                 print "ERROR the job doesn't exist"
                 continue
 
-            url = job.input['path']
+            url = job.input['url']
 
             ret = 1
             try:

@@ -75,6 +75,7 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
             key = decrypt(b64decode(input['key']), self.master.config['secret']) 
             input = eval(key, {"__builtins__":None},{})
             assert input.__class__ is dict
+            input['url'] = input['url'] + '?' + urllib.urlencode({'key' : b64encode(encrypt(str((input['uid'],input['fieldName'],profileId)),self.master.config['secret']))})
         except Exception, e:
             print "Invalid transcode request: %s" % e
             return "ERROR: Unauthorized"
