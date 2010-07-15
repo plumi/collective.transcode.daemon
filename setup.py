@@ -20,6 +20,7 @@ setup(name='collective.transcode.daemon',
       install_requires=[
           # -*- Extra requirements: -*-
           'zope.app.twisted',
+          'pycrypto',
       ],
       entry_points="""
       # -*- Entry points: -*-

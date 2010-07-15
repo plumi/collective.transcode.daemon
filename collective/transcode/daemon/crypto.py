@@ -20,7 +20,9 @@ def encrypt(plaintext, secret, lazy=True, checksum=True):
     returns ciphertext
     """
 
-    secret = _lazysecret(secret) if lazy else secret
+    if lazy:
+        secret = _lazysecret(secret) 
+
     encobj = AES.new(secret, AES.MODE_CFB)
 
     if checksum:
@@ -37,7 +39,8 @@ def decrypt(ciphertext, secret, lazy=True, checksum=True):
     returns plaintext
     """
 
-    secret = _lazysecret(secret) if lazy else secret
+    if lazy:
+        secret = _lazysecret(secret)
     encobj = AES.new(secret, AES.MODE_CFB)
     plaintext = encobj.decrypt(ciphertext)
 
