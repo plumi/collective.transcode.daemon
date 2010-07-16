@@ -61,11 +61,11 @@ class Job(dict):
             field = '%s/' % input['fieldName']
         else:
             field = ''
-        path = self['videofolder'] + '/' + \
+        path = urllib.url2pathname(self['videofolder'] + '/' + \
                 parsedURL[0] + '/' + \
                 hostport + \
                 parsedURL[2] + '/' + \
-                field + self.profile['id']
+                field + self.profile['id'])
         try:
             os.makedirs(path)
         except:
