@@ -53,6 +53,7 @@ class Job(dict):
             self[key] = value
 
         input['fileName'] = input['fileName'].replace(' ', '-')  
+        input['fileName'] = input['fileName'].replace('"', '')
 
         #This cleans up unsavoury characters from the path name. A video coming
         #from a URL such as https://local-server:9080/plone/foo/bar will
