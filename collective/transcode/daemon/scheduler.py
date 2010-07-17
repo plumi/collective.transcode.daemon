@@ -52,6 +52,8 @@ class Job(dict):
         for key,value in kwargs.items():
             self[key] = value
 
+        input['fileName'] = input['fileName'].replace(' ', '-')  
+
         #This cleans up unsavoury characters from the path name. A video coming
         #from a URL such as https://local-server:9080/plone/foo/bar will
         #get stored in a directory .../https/local-server/9080/plone/foo/bar/...
@@ -75,8 +77,8 @@ class Job(dict):
         fileName = input.get('fileName', None) or input['path'].split('/')[-1]
         basename = '.'.join(fileName.split('.')[:-1]) or fileName
         outFile = path + '/' + basename + '.' + profile['output_extension']
-        self.output = dict(path=urllib.pathname2url(outFile),type=profile['output_mime_type'])
-    
+        self.output = dict(path = outFile, type = profile['output_mime_type'])
+            
     def __repr__(self):
         return "<Job input=%r ouput=%r options=%r %s" % (
             self.input,
