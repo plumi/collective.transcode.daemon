@@ -111,7 +111,10 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
     
     def callback(self, ret, job):
         print "callback return for jobId %s profile %s is %s" %(b64encode(job.UJId), job.profile['id'],ret)
-        server = xmlrpclib.Server(job['callbackURL'])
+        cbUrl = job['callbackURL']
+        if not cbUrl.endswith('/'):
+            cbUrl+='/'
+        server = xmlrpclib.Server(cbUrl)
         vals = ret.split()
         key = { 
                   'jobId' : job.UJId,
