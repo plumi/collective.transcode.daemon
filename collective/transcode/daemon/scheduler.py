@@ -70,6 +70,7 @@ class Job(dict):
                 parsedURL[2] + '/' + \
                 field + self.profile['id']
         try:
+            os.umask(0)
             os.makedirs(path)
         except:
             pass
@@ -128,6 +129,7 @@ class JobSched:
                 #TODO - check file was retrieved successfully
                 job.cmd = job.profile['cmd'] % (filename, job.output['path'])
                 print "RUNNING: %s" % job.cmd
+                os.umask(0)
                 ret = os.system(job.cmd)
                 os.remove(filename)
             except Exception, e:
