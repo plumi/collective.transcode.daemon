@@ -52,6 +52,7 @@ class Job(dict):
         for key,value in kwargs.items():
             self[key] = value
 
+        # basic filename checking
         input['fileName'] = input['fileName'].replace(' ', '-')  
         input['fileName'] = input['fileName'].replace('"', '')
 
