@@ -18,6 +18,21 @@ of the collective.transcode.* suite for Plone 3.x & 4.x.
 Even though the only it has only been integrated with Plone, There is nothing Plone
 specific the the collective.transcode.daemon package.
 
+Requirements
+============
+Apart from what is assembled by the buildout, the following dependencies must
+be installed manually for the transcoding scripts to work:
+
+ * ffmpeg with x264 support
+ * ffmpeg2theora
+
+In Ubuntu 10.04 you can install the above using the following commands:
+
+    sudo wget --output-document=/etc/apt/sources.list.d/medibuntu.list http://www.medibuntu.org/sources.list.d/$(lsb_release -cs).list && sudo apt-get --quiet update && sudo apt-get --yes --quiet --allow-unauthenticated install medibuntu-keyring && sudo apt-get --quiet update
+
+    sudo aptitude install build-essential libavcodec-unstripped-52 ffmpeg ffmpeg2theora
+
+The daemon has been tested with Python2.4 and Python2.6.
 
 Installation
 ============
@@ -27,13 +42,6 @@ If you want a complete transcoding solution for the Plone CMS use
 collective.transcode.star: 
 
 http://pypi.python.org/pypi/collective.transcode.star
-
-Requirements 
-~~~~~~~~~~~~
-The default transcode scripts require ffmpeg with x264 support and 
-ffmpeg2theora.
-
-Has been tested with Python2.4 and Python2.6
 
 Buildout
 ~~~~~~~~
