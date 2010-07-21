@@ -1,6 +1,5 @@
 Introduction
 ============
-
 collective.transcode.daemon is an XML-RPC daemon servicing requests for 
 transcoding jobs. 
 
@@ -21,13 +20,13 @@ specific the the collective.transcode.daemon package.
 
 
 Installation
-------------
-
+============
 The instructions below are for setting up a standalone transcode daemon.
 
 If you want a complete transcoding solution for the Plone CMS use
 collective.transcode.star: 
-   http://pypi.python.org/pypi/collective.transcode.star
+
+http://pypi.python.org/pypi/collective.transcode.star
 
 Requirements 
 ~~~~~~~~~~~~
