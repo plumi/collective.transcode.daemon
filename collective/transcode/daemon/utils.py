@@ -31,7 +31,7 @@ __docformat__ = 'plaintext'
 __licence__ = 'GPL'
 
 import os
-from popen2 import Popen3
+from subprocess import Popen
 
 def systemOut(cmd):
   cmdObj = Popen3(cmd)

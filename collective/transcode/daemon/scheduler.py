@@ -29,7 +29,7 @@ Based on Darksnow ConvertDaemon by Jean-Nicolas Bès <jean.nicolas.bes@darksnow.
 
 
 import time, os
-from sha import sha
+from hashlib import sha1 as sha
 from Queue import Queue
 from utils import systemOut
 import urllib
