@@ -27,7 +27,15 @@ setup(name='collective.transcode.daemon',
       version=version,
       description="Video transcoding daemon",
       long_description=long_description,
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=[
+        'Framework :: Twisted',
+        'Intended Audience :: Developers',
+        'Programming Language :: Python',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Multimedia :: Video :: Conversion',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        ],
       keywords='video transcoding flv mp4 ogg plone zope',
       author='unweb.me',
       author_email='we@unweb.me',

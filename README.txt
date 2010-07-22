@@ -64,7 +64,3 @@ configured::
 
 You can change the quality and format of the transcoded files by editing the transcoding
 scripts provided in the scripts dir.
-
-Authors
-=======
-Unweb.me, https://unweb.me
