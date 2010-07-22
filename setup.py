@@ -31,7 +31,6 @@ setup(name='collective.transcode.daemon',
       classifiers=[
         'Framework :: Twisted',
         'Intended Audience :: Developers',
-        'Intended Audience :: Integrators',
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Multimedia :: Video :: Conversion',
