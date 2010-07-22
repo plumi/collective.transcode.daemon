@@ -12,12 +12,12 @@ long_description = (
     'Contributors\n'
     '************\n'
     + '\n' +
-    read('CONTRIBUTORS.txt')
+    read('docs/CONTRIBUTORS.txt')
     + '\n' +
     'Change history\n'
     '**************\n'
     + '\n' +
-    read('CHANGES.txt')
+    read('docs/CHANGES.txt')
     + '\n' +
    'Download\n'
     '********\n'
@@ -31,12 +31,13 @@ setup(name='collective.transcode.daemon',
       classifiers=[
         'Framework :: Twisted',
         'Intended Audience :: Developers',
+        'Intended Audience :: Integrators',
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Multimedia :: Video :: Conversion',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         ],
-      keywords='video transcoding flv mp4 ogg plone zope',
+      keywords='video transcoding flv mp4 ogg plone zope twisted',
       author='unweb.me',
       author_email='we@unweb.me',
       url='https://unweb.me',
