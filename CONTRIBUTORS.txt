@@ -1,4 +1,4 @@
- * Dimitris Moraitis, unweb.me
- * Mike Muzurakis, unweb.me
- * Christos Psaltis, unweb.me
+- Dimitris Moraitis, unweb.me
+- Mike Muzurakis, unweb.me
+- Christos Psaltis, unweb.me
 
