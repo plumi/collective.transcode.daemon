@@ -19,7 +19,7 @@ Even though the only it has only been integrated with Plone, There is nothing Pl
 specific the the collective.transcode.daemon package.
 
 Requirements
-============
+------------
 Apart from what is assembled by the buildout, the following dependencies must
 be installed manually for the transcoding scripts to work:
 
@@ -35,7 +35,7 @@ In Ubuntu 10.04 you can install the above using the following commands:
 The daemon has been tested with Python2.4 and Python2.6.
 
 Installation
-============
+------------
 The instructions below are for setting up a standalone transcode daemon.
 
 If you want a complete transcoding solution for the Plone CMS use
@@ -52,7 +52,7 @@ buildout.cfg file provided::
     ./bin/buildout
 
 Configuration
-=============
+-------------
 On buildout.cfg, upon transcodedaemon section, the following settings can be 
 configured::
 
