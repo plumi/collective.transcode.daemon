@@ -35,7 +35,7 @@ import os
 import xmlrpclib
 import urllib
 from twisted.internet import reactor
-from twisted.web2 import xmlrpc
+from twisted.web import xmlrpc
 from scheduler import Job
 from base64 import b64decode, b64encode
 from crypto import decrypt, encrypt
@@ -57,13 +57,15 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
     def __init__(self, master):
         self.allowNone = True
         self.master = master
+
+        self.useDateTime = False
     
-    def xmlrpc_getAvailableProfiles(self, request):
+    def xmlrpc_getAvailableProfiles(self):
         ret = [i['id'] for i in self.master.config['profiles']]
         print ret
         return ret
 
-    def xmlrpc_transcode(self, request, input, profileId, options, callbackURL, fieldName=''):
+    def xmlrpc_transcode(self, input, profileId, options, callbackURL, fieldName=''):
         profile = None
         for p in self.master.config['profiles']:
             if profileId == p['id']: 
@@ -95,17 +97,17 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         else:
             return job.defer
 
-    def xmlrpc_queueSize(self, request):
+    def xmlrpc_queueSize(self):
         return self.master.queue.qsize()
     
-    def xmlrpc_stat(self, request, UJId):
+    def xmlrpc_stat(self, UJId):
         return "ok"
     
-    def xmlrpc_stop(self, request):
+    def xmlrpc_stop(self):
         reactor.callLater(0.1, self.master.stop)
         return True
     
-    def xmlrpc_cancel(self, request, UJId):
+    def xmlrpc_cancel(self, UJId):
         self.master.delJob(UJId)
         return True
     

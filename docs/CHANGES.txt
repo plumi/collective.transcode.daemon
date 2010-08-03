@@ -1,3 +1,11 @@
+0.4 (2010-08-03)
+----------------
+
+- cleared up codebase [cpsaltis]
+- removed dependency on twisted.web2 [cpsaltis]
+- removed dependency on minitage.recipe [cpsaltis]
+- simplified buildout.cfg [cpsaltis]
+
 0.3 (2010-07-23)
 ----------------
 

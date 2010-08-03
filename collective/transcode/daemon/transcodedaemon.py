@@ -27,61 +27,20 @@ Copyright (c) 2009 unweb.me.
 
 """
 
-import time
+import os
 
-from twisted.application import strports
-from twisted.web2 import server, http, resource, channel, static
-from twisted.web2 import http_headers, responsecode
-
+from twisted.application import strports, service
+from twisted.web import server, resource, static, http
 from twisted.internet import reactor
 
 from collective.transcode.daemon.xmlrpc import XMLRPCConvert
-
 from collective.transcode.daemon.scheduler import JobSched
-from twisted.application import service
-
-from twisted.web2.stream import readIntoFile
-
-import os
-import tempfile
 
 application = service.Application("TranscodeDaemon")
 
 class TranscodeWebRoot(resource.Resource):
-    addSlash = True
-    
-    def filewritten(self, rval, request, tmpfile):
-        contenttype = http_headers.MimeType('text', 'plain', charset= "utf-8")
-        return http.Response(responsecode.OK,
-                {'last-modified': time.time(),
-                 'etag': http_headers.ETag(str(hash("OK\r\n"))),
-                 'content-type': contenttype,},
-                "OK\r\n")
-
-    def error_while_writing(self, err, request):
-        contenttype = http_headers.MimeType('text', 'plain', charset= "utf-8")
-        return http.Response(responsecode.INTERNAL_SERVER_ERROR,
-                             {'last-modified': time.time(),
-                              'etag': http_headers.ETag(str(hash("NOT GOOD\r\n"))),
-                              'content-type': contenttype,},
-                             "NOT GOOD\r\n")
-
-    def http_POST(self, request):
-        tmpfile = tempfile.NamedTemporaryFile()
-        ofd = os.fdopen(os.dup(tmpfile.file.fileno()), 'wb+')
-        defer = readIntoFile(request.stream, ofd)
-        defer.addCallback(self.filewritten, request, tmpfile)
-        return defer
-    
     def render(self, request):
-        contenttype = http_headers.MimeType('text', 'plain', charset= "utf-8")
-        return http.Response(responsecode.OK,
-                {'last-modified': time.time(),
-                 'etag': http_headers.ETag(str(hash("OK\r\n"))),
-                 'content-type': contenttype,},
-                "OK\r\n")
-
-
+        return "OK!"
     
 
 class TranscodeDaemon(JobSched):
@@ -115,22 +74,20 @@ class TranscodeDaemon(JobSched):
     
     def launchHttp(self, application):
         root = TranscodeWebRoot()
+        root.putChild('', root)
         root.putChild('RPC2', XMLRPCConvert(self))
         root.putChild(self.config['videofolder'],static.File(self.config['videofolder']))
+        host = self.config['listen_host'].encode('ascii')
+        port = self.config['listen_port'].encode('ascii')
         site = server.Site(root)
-        
-        httpchan = channel.HTTPFactory(site)
-        thyStopFact = httpchan.stopFactory
-        mystop = self.stop
+
+        thyStopFact = site.stopFactory
         def myStopFact():
             thyStopFact()
             self.stop(stopReactor=False)
-        httpchan.stopFactory = myStopFact
+        site.stopFactory = myStopFact
         
-        host = self.config['listen_host'].encode('ascii')
-        port = self.config['listen_port'].encode('ascii')
-        
-        s = strports.service('tcp:%s:interface=%s' % (port, host), httpchan)
+        s = strports.service('tcp:%s:interface=%s' % (port, host), site)
         s.setServiceParent(application)
         print "Launched http channel"
   
