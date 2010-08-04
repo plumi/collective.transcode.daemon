@@ -1,1 +1,3 @@
 #!/bin/sh
+
+ffmpeg -i "$1" -target pal-dvd "$2"
