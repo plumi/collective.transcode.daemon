@@ -1,6 +1,6 @@
 #!./bin/daemonpy
 
-import sys, subprocess, datetime, tempfile, os
+import sys, subprocess, datetime, tempfile, os, urllib
 import feedparser
 
 if len(sys.argv) == 3:
@@ -28,12 +28,13 @@ titles = []
 tempdir = tempfile.mkdtemp()
 
 for entry in rss.entries:
-    titles.append(entry.title)
-
-for video in os.listdir(tempdir):
-    #TODO 1: download file on temp dir 
-    files.append(tempdir+video)
-
+    try:
+        titles.append(entry.title)
+        (video, response) = urllib.urlretrieve(entry.id, tempdir+'/'+entry.id.split('/')[-1])
+        files.append(video)
+    except:
+        #TODO: log problem
+        pass
 
 cmd += [u'-files'] + files
 cmd += [u'-titles'] + titles
@@ -47,11 +48,11 @@ except:
 
 
 try:
-    subprocess.call("mkisofs -o %s %s" % (output_iso, tempdir))
+    subprocess.call(["mkisofs", "-o", output_iso, tempdir])
 except:
     print 'problem when calling mkisofs command' % 
 
     
 #TODO 2: send callback that dvd is ready
-#TODO 3: delete dvd and folder after 
+#TODO 3: delete dvd and folder after some time
 
