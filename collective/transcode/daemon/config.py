@@ -4,18 +4,17 @@ videofolder='videos'
 secret='1771d99931264d538e75eeb19da7d6a0'
 
 default_supported_mimetypes = [ 'video/mpeg', 
-                'video/3gpp', 
-                'video/x-ms-wmv', 
-                'video/ogg', 
-                'video/x-ogg', 
-                'video/x-ogm+ogg', 
-                'video/mpeg', 
-                'video/quicktime', 
-                'video/x-la-asf', 
-                'video/x-ms-asf', 
-                'video/x-msvideo',
-                'video/mp4',
-                ]
+                                'video/3gpp', 
+                                'video/x-ms-wmv', 
+                                'video/ogg', 
+                                'video/x-ogg', 
+                                'video/x-ogm+ogg', 
+                                'video/quicktime', 
+                                'video/x-la-asf', 
+                                'video/x-ms-asf', 
+                                'video/x-msvideo',
+                                'video/mp4',
+                              ]
 
 profiles = [
         {'id' : 'low', 
