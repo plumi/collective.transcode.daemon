@@ -49,6 +49,7 @@ setup(name='collective.transcode.daemon',
           'pycrypto==2.2',
           'hashlib',
           'Twisted==10.1.0',
+          'feedparser',
       ],
       entry_points="""
       # -*- Entry points: -*-
