@@ -30,7 +30,7 @@ tempdir = tempfile.mkdtemp()
 for entry in rss.entries:
     try:
         titles.append(entry.title)
-        (video, response) = urllib.urlretrieve(entry.id, tempdir+'/'+entry.id.split('/')[-1])
+        (video, response) = urllib.urlretrieve(entry.guid, tempdir+'/'+entry.guid.split('/')[-1])
         files.append(video)
     except:
         #TODO: log problem

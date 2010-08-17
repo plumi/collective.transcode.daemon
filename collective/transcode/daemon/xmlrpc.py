@@ -36,9 +36,10 @@ import xmlrpclib
 import urllib
 from twisted.internet import reactor
 from twisted.web import xmlrpc
-from scheduler import Job
+from scheduler import Job , BurnJob
 from base64 import b64decode, b64encode
 from crypto import decrypt, encrypt
+import feedparser
 
 def hex(bytes):
     hexbytes = ""
@@ -110,6 +111,32 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
     def xmlrpc_cancel(self, UJId):
         self.master.delJob(UJId)
         return True
+
+
+    def xmlrpc_burn(self, input, options, callbackURL, fieldName=''):
+        profileId = 'dvd'
+        profile = None
+        for p in self.master.config['profiles']:
+            if profileId == p['id']: 
+                profile = p        
+        if not profile:
+            return "ERROR: Invalid profile %s" % profileId
+
+        input = decrypt(b64decode(input['key']), self.master.config['secret']) 
+        rss = feedparser.parse(input)
+        print rss
+        print rss.link
+        
+        output = {}
+        #job = BurnJob(input, output, profile, options, allbackURL=callbackURL, videofolder=self.master.config['videofolder'])
+        #job.defer.addBoth(self.callback, job)
+        #jobid = self.master.addjob(job)
+        #if not jobid:
+        #    return "ERROR: couldn't get a jobid"
+        #if callbackURL:
+        #    return hex(jobid)
+        #else:
+        #    return job.defer
     
     def callback(self, ret, job):
         print "callback return for jobId %s profile %s is %s" %(b64encode(job.UJId), job.profile['id'],ret)
