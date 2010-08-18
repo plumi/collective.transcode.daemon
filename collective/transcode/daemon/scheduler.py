@@ -50,46 +50,42 @@ class Job(dict):
         self.options = options
         self.profile = profile
         self.defer = Deferred()
-        if profile =='dvd':
-            for key,value in kwargs.items():
-                self[key] = value
+        for key,value in kwargs.items():
+            self[key] = value
+
+        # basic filename checking
+        input['path'] = input['path'].replace(' ', '-')
+        input['path'] = input['path'].replace('%20', '-')
+        input['path'] = input['path'].replace('"', '')
+        input['fileName'] = input['fileName'].replace(' ', '-')
+        input['fileName'] = input['fileName'].replace('%20', '-')
+        input['fileName'] = input['fileName'].replace('"', '')
+
+        #This cleans up unsavoury characters from the path name. A video coming
+        #from a URL such as https://local-server:9080/plone/foo/bar will
+        #get stored in a directory .../https/local-server/9080/plone/foo/bar/...
+        parsedURL = urlparse(self.input['path'])
+        hostport = '/'.join(parsedURL[1].split(':'))
+        if input['fieldName']:
+            field = '%s/' % input['fieldName']
         else:
-            for key,value in kwargs.items():
-                self[key] = value
+            field = ''
+        path = self['videofolder'] + '/' + \
+                parsedURL[0] + '/' + \
+                hostport + \
+                parsedURL[2] + '/' + \
+                field + self.profile['id']
+        try:
+            os.umask(0)
+            os.makedirs(path)
+        except:
+            pass
 
-            # basic filename checking
-            input['path'] = input['path'].replace(' ', '-')
-            input['path'] = input['path'].replace('%20', '-')
-            input['path'] = input['path'].replace('"', '')
-            input['fileName'] = input['fileName'].replace(' ', '-')
-            input['fileName'] = input['fileName'].replace('%20', '-')
-            input['fileName'] = input['fileName'].replace('"', '')
-
-            #This cleans up unsavoury characters from the path name. A video coming
-            #from a URL such as https://local-server:9080/plone/foo/bar will
-            #get stored in a directory .../https/local-server/9080/plone/foo/bar/...
-            parsedURL = urlparse(self.input['path'])
-            hostport = '/'.join(parsedURL[1].split(':'))
-            if input['fieldName']:
-                field = '%s/' % input['fieldName']
-            else:
-                field = ''
-            path = self['videofolder'] + '/' + \
-                    parsedURL[0] + '/' + \
-                    hostport + \
-                    parsedURL[2] + '/' + \
-                    field + self.profile['id']
-            try:
-                os.umask(0)
-                os.makedirs(path)
-            except:
-                pass
-
-            #grabs the basename of the file
-            fileName = input.get('fileName', None) or input['path'].split('/')[-1]
-            basename = '.'.join(fileName.split('.')[:-1]) or fileName
-            outFile = path + '/' + basename + '.' + profile['output_extension']
-            self.output = dict(path = outFile, type = profile['output_mime_type'])
+        #grabs the basename of the file
+        fileName = input.get('fileName', None) or input['path'].split('/')[-1]
+        basename = '.'.join(fileName.split('.')[:-1]) or fileName
+        outFile = path + '/' + basename + '.' + profile['output_extension']
+        self.output = dict(path = outFile, type = profile['output_mime_type'])
                 
     def __repr__(self):
         return "<Job input=%r ouput=%r options=%r %s" % (
@@ -130,33 +126,27 @@ class JobSched:
                 print "ERROR the job doesn't exist"
                 continue
 
-            if job.profile['id'] == 'dvd':
+            url = job.input['url']
+
+            ret = 1
+            try:
+                print "DOWNLOADING %s" % url
+                (filename, response) = urllib.urlretrieve(url)
+                #TODO - check file was retrieved successfully
                 job.cmd = job.profile['cmd'] % (filename, job.output['path'])
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
                 ret = os.system(job.cmd)
+                os.remove(filename)
+            except Exception, e:
+                ret = "%s" % e
+                print "EXCEPTION %s CAUGHT FOR %r" % (ret, job)
+            print "Transcoder returned", ret, job.output
+       
+            if ret == 0: 
+                retPath = job.output['path']
+                reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
             else:
-                url = job.input['url']
-
-                ret = 1
-                try:
-                    print "DOWNLOADING %s" % url
-                    (filename, response) = urllib.urlretrieve(url)
-                    #TODO - check file was retrieved successfully
-                    job.cmd = job.profile['cmd'] % (filename, job.output['path'])
-                    print "RUNNING: %s" % job.cmd
-                    os.umask(0)
-                    ret = os.system(job.cmd)
-                    os.remove(filename)
-                except Exception, e:
-                    ret = "%s" % e
-                    print "EXCEPTION %s CAUGHT FOR %r" % (ret, job)
-                print "Transcoder returned", ret, job.output
+                #TODO - make more useful message
+                reactor.callFromThread(job.defer.errback, 'FAIL %s' % ret)
            
-                if ret == 0: 
-                    retPath = job.output['path']
-                    reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
-                else:
-                    #TODO - make more useful message
-                    reactor.callFromThread(job.defer.errback, 'FAIL %s' % ret)
-               

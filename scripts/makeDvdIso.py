@@ -1,7 +1,9 @@
-#!./bin/daemonpy
+#!/usr/bin/python
 
 import sys, subprocess, datetime, tempfile, os, urllib
 import feedparser
+
+
 
 if len(sys.argv) == 3:
     input_rss = sys.argv[1]
