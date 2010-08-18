@@ -36,7 +36,7 @@ import xmlrpclib
 import urllib
 from twisted.internet import reactor
 from twisted.web import xmlrpc
-from scheduler import Job , BurnJob
+from scheduler import Job
 from base64 import b64decode, b64encode
 from crypto import decrypt, encrypt
 import feedparser
