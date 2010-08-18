@@ -159,47 +159,4 @@ class JobSched:
                 else:
                     #TODO - make more useful message
                     reactor.callFromThread(job.defer.errback, 'FAIL %s' % ret)
-                
-
-class BurnJob(dict):
-    def __init__(self, input, output, profile, options, **kwargs):
-        dict.__init__(self)
-        self.input = input
-        self.output = output
-        self.options = options
-        self.profile = profile
-        self.defer = Deferred()
-        for key,value in kwargs.items():
-            self[key] = value
-
-        rss = feedparser.parse(input)
-
-        #This cleans up unsavoury characters from the path name. A video coming
-        #from a URL such as https://local-server:9080/plone/foo/bar will
-        #get stored in a directory .../https/local-server/9080/plone/foo/bar/...
-        parsedURL = urlparse(rss.link)
-        hostport = '/'.join(parsedURL[1].split(':'))
-        path = self['videofolder'] + '/' + \
-                parsedURL[0] + '/' + \
-                hostport + \
-                parsedURL[2] + '/' + \
-                rss.title + self.profile['id']
-        try:
-            os.umask(0)
-            os.makedirs(path)
-        except:
-            pass
-
-        #grabs the basename of the file
-        basename = rss.title
-        outFile = path + '/' + basename + '.' + profile['output_extension']
-        self.output = dict(path = outFile, type = profile['output_mime_type'])
-                
-    def __repr__(self):
-        return "<Job input=%r ouput=%r options=%r %s" % (
-            self.input,
-            self.output,
-            self.options,
-            dict.__repr__(self),
-        )
-
+               
