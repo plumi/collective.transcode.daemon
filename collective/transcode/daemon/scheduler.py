@@ -31,7 +31,7 @@ Based on Darksnow ConvertDaemon by Jean-Nicolas Bès <jean.nicolas.bes@darksnow.
 import time, os
 from hashlib import sha1 as sha
 from Queue import Queue
-import urllib
+import urllib, urllib2
 from urlparse import urlparse
 
 from twisted.internet import reactor
@@ -40,6 +40,7 @@ threadable.init(1)
 from twisted.internet.defer import Deferred
 import sys, subprocess, datetime, tempfile
 import feedparser
+import os.path
 
 
 class Job(dict):
@@ -131,18 +132,23 @@ class JobSched:
             ret = 1
             try:
                 print "DOWNLOADING %s" % url
-                (filename, response) = urllib.urlretrieve(url)
+                if os.path.isfile('tempfile'):
+                    os.remove('tempfile')
+                rssf = urllib2.urlopen(url)
+                f = open('tempfile', 'w')
+                f.write(rssf.read())
+                f.close()
                 #TODO - check file was retrieved successfully
-                job.cmd = job.profile['cmd'] % (filename, job.output['path'])
+                job.cmd = job.profile['cmd'] % ('tempfile', job.output['path'])
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
                 ret = os.system(job.cmd)
-                os.remove(filename)
+                os.remove('tempfile')
             except Exception, e:
                 ret = "%s" % e
                 print "EXCEPTION %s CAUGHT FOR %r" % (ret, job)
             print "Transcoder returned", ret, job.output
-       
+ 
             if ret == 0: 
                 retPath = job.output['path']
                 reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
