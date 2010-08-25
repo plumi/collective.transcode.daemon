@@ -99,16 +99,16 @@ class Job(dict):
 class JobSched:
   
     def __init__(self):
-        self.queue=Queue()
-        self.job={}
+        self.queue = Queue()
+        self.job = {}
     
     def genUJId(self):
         return sha(str(time.time())).digest()
     
     def addjob(self,job):
-        UJId=self.genUJId()
-        self.job[UJId]=job
-        job.UJId=UJId
+        UJId = self.genUJId()
+        self.job[UJId] = job
+        job.UJId = UJId
         self.queue.put(job)
         return UJId
     
@@ -117,7 +117,7 @@ class JobSched:
     
     def run(self):
         print "Scheduler thread running"
-        self.running=True
+        self.running = True
         while self.running:
             job = self.queue.get()
             print "New job"

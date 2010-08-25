@@ -55,8 +55,6 @@ class TranscodeDaemon(JobSched):
     def __init__(self, application):
         print "Initializing"
         JobSched.__init__(self)
-        
-        self.transcoder={}
 
         import imp
         config = imp.load_source('config',self.rel("config.py"))
@@ -69,8 +67,7 @@ class TranscodeDaemon(JobSched):
 
         self.launchHttp(application)
         reactor.callInThread(self.run)
-        print "Launched TranscodeDaemon scheduler thread...."
-    
+        print "Launched TranscodeDaemon scheduler thread...."    
     
     def launchHttp(self, application):
         root = TranscodeWebRoot()
@@ -97,8 +94,6 @@ class TranscodeDaemon(JobSched):
         if stopReactor:
             reactor.stop()
         print "reactor stopped"
-        for trans in self.transcoder.keys():
-            del self.transcoder[trans]
     
     def __del__(self):
         if self.running:
