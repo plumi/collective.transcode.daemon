@@ -39,7 +39,6 @@ from twisted.web import xmlrpc
 from scheduler import Job
 from base64 import b64decode, b64encode
 from crypto import decrypt, encrypt
-import feedparser
 
 def hex(bytes):
     hexbytes = ""
