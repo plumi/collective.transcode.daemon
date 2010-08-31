@@ -39,7 +39,6 @@ from twisted.python import threadable
 threadable.init(1)
 from twisted.internet.defer import Deferred
 import sys, subprocess, datetime, tempfile
-import feedparser
 import os.path
 
 
