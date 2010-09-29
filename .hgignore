@@ -1,0 +1,5 @@
+# use glob syntax.
+syntax: glob
+
+collective.transcode.daemon.egg-info
+*.pyc
