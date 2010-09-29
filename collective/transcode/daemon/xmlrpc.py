@@ -39,6 +39,9 @@ from twisted.web import xmlrpc
 from scheduler import Job
 from base64 import b64decode, b64encode
 from crypto import decrypt, encrypt
+import os.path
+from urlparse import urlparse
+import shutil
 
 def hex(bytes):
     hexbytes = ""
@@ -90,7 +93,7 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
            input['type'] not in profile['supported_mime_types']:
             return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
         output = {}
-        job = Job(input, output, profile, options, callbackURL=callbackURL, videofolder=self.master.config['videofolder'], fieldName=fieldName )
+        job = Job(input, output, profile, options, callbackURL=callbackURL, videofolder=self.master.config['videofolder'], fieldName=fieldName)
         job.defer.addBoth(self.callback, job)
         jobid = self.master.addjob(job)
         if not jobid:
@@ -99,6 +102,34 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
             return hex(jobid)
         else:
             return job.defer
+
+
+    def xmlrpc_delete(self, input, options, callbackURL, fieldName=''):
+        try:
+            key = decrypt(b64decode(input['key']), self.master.config['secret']) 
+            input = eval(key, {"__builtins__":None},{})
+            assert input.__class__ is dict
+            input['url'] = input['url'] + '?' + urllib.urlencode({'key' : b64encode(encrypt(str((input['uid'],input['fieldName'])),self.master.config['secret']))})
+        except Exception, e:
+            print "Invalid delete request: %s" % e
+            return "ERROR: Unauthorized"
+
+         # basic filename checking
+        input['path'] = input['path'].replace(' ', '-')
+        input['path'] = input['path'].replace('%20', '-')
+        input['path'] = input['path'].replace('"', '')
+        input['fileName'] = input['fileName'].replace(' ', '-')
+        input['fileName'] = input['fileName'].replace('%20', '-')
+        input['fileName'] = input['fileName'].replace('"', '')
+
+        parsedURL = urlparse(input['path'])
+        hostport = '/'.join(parsedURL[1].split(':'))
+        path = self.master.config['videofolder'] + '/' + \
+                parsedURL[0] + '/' + \
+                hostport + \
+                parsedURL[2]
+        if os.path.exists(path):
+            shutil.rmtree(path)
 
     def xmlrpc_queueSize(self):
         return self.master.queue.qsize()
