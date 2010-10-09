@@ -1,3 +1,9 @@
+0.5 (2010-10-09)
+----------------
+
+- delete support [clopy]
+- support for creating DVD iso files when combined with collective.transcode.burnstation [clopy, cpsaltis, dimo, mgogoulos]
+
 0.4 (2010-08-03)
 ----------------
 
