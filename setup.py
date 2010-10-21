@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
-version = '0.5'
+version = '0.6'
 
 long_description = (
     read('README.txt')
@@ -46,9 +46,9 @@ setup(name='collective.transcode.daemon',
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
-          'pycrypto==2.2',
+          'pycrypto',
           'hashlib',
-          'Twisted==10.1.0',
+          'Twisted',
       ],
       entry_points="""
       # -*- Entry points: -*-

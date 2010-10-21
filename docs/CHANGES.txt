@@ -1,3 +1,8 @@
+0.6 (2010-10-21)
+----------------
+
+- remove version pins in setup.py to prevent version conflict errors [dimo]
+
 0.5 (2010-10-09)
 ----------------
 
