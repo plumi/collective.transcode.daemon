@@ -1,3 +1,8 @@
+0.7 (2010-11-23)
+----------------
+
+- use a proper tempfile before transcoding [clopy] 
+
 0.6 (2010-10-21)
 ----------------
 
