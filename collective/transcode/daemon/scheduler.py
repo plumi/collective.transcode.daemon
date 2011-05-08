@@ -117,17 +117,19 @@ class JobSched:
         print "Scheduler thread running"
         self.running = True
         while self.running:
-            job = self.queue.get()
-            print "New job"
-            if job is None:
-                break
-            if job.UJId not in self.job:
+            try:
+                job = self.queue.get(block=True, timeout=5)
+            except:
+                continue
+            if job is None or job.UJId not in self.job:
                 print "ERROR the job doesn't exist"
                 continue
 
+            print "New job"
             url = job.input['url']
 
             ret = 1
+
             try:
                 print "DOWNLOADING %s" % url
                 (filename, response) = urllib.urlretrieve(url) 
