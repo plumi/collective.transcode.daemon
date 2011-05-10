@@ -1,3 +1,8 @@
+0.8 (2010-05-10)
+----------------
+
+- add timeout to scheduler queue to avoid possible transcoder freeze [dimo, mgogoulos]
+
 0.7 (2010-11-23)
 ----------------
 
