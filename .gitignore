@@ -1,2 +1,10 @@
 *.py?
+.installed.cfg
+bin/
+develop-eggs/
+eggs/
+include/
+lib/
+parts/
 collective.transcode.daemon.egg-info/
+
