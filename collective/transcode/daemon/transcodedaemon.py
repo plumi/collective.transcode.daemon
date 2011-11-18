@@ -73,7 +73,7 @@ class TranscodeDaemon(JobSched):
         root = TranscodeWebRoot()
         root.putChild('', root)
         root.putChild('RPC2', XMLRPCConvert(self))
-        root.putChild(self.config['videofolder'],static.File(self.config['videofolder']))
+        root.putChild(self.config['videofolder'], static.File(self.config['videofolder'], defaultType='video/webm'))
         host = self.config['listen_host'].encode('ascii')
         port = self.config['listen_port'].encode('ascii')
         site = server.Site(root)
