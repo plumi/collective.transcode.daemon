@@ -151,13 +151,19 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         if not cbUrl.endswith('/'):
             cbUrl+='/'
         server = xmlrpclib.Server(cbUrl)
-        vals = ret.split()
+        if ret.__class__ is str:
+            vals = ret.split()
+            path = vals[0] == 'SUCCESS' and vals[1] or ''
+        else:
+            path = ''
+            ret = ret.getErrorMessage()
+            
         key = { 
                   'jobId' : job.UJId,
                   'UID' : job.input['uid'],
                   'fieldName' : job.input['fieldName'], 
                   'profile' : job.profile['id'],
-                  'path' : vals[0] == 'SUCCESS' and vals[1] or '',
+                  'path' : path,
                   'msg' : ret,
               }
         output = { 'key' : b64encode(encrypt(str(key), self.master.config['secret'])) }

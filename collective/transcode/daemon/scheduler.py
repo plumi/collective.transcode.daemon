@@ -35,10 +35,11 @@ import urllib
 from urlparse import urlparse
 
 from twisted.internet import reactor
-from twisted.python import threadable
+from twisted.python import threadable, failure
 threadable.init(1)
 from twisted.internet.defer import Deferred
-import sys, subprocess, datetime, tempfile
+import sys, datetime, tempfile
+from subprocess import Popen, PIPE, STDOUT
 
 
 class Job(dict):
@@ -137,17 +138,19 @@ class JobSched:
                 job.cmd = job.profile['cmd'] % (filename, job.output['path']) 
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
-                ret = os.system(job.cmd)
+                p = Popen(job.cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+                ret = os.waitpid(p.pid, 0)
                 os.remove(filename)
-            except Exception, e:
-                ret = "%s" % e
-                print "EXCEPTION %s CAUGHT FOR %r" % (ret, job)
+                errorMessage = p.stderr.read()
+            except Exception as e:
+                errorMessage = e.message
+                print "EXCEPTION %s CAUGHT FOR %r" % (e, job)
+                
             print "Transcoder returned", ret, job.output
  
             if ret == 0: 
                 retPath = job.output['path']
                 reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
             else:
-                #TODO - make more useful message
-                reactor.callFromThread(job.defer.errback, 'FAIL %s' % ret)
+                reactor.callFromThread(job.defer.errback, failure.Failure(Exception(errorMessage)))
            
