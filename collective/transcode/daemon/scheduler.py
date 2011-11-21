@@ -139,7 +139,7 @@ class JobSched:
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
                 p = Popen(job.cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
-                ret = os.waitpid(p.pid, 0)
+                ret = os.waitpid(p.pid, 0)[1]
                 os.remove(filename)
                 errorMessage = p.stderr.read()
             except Exception as e:
