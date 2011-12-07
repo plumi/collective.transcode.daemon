@@ -6,5 +6,6 @@ eggs/
 include/
 lib/
 parts/
+videos/
 collective.transcode.daemon.egg-info/
 
