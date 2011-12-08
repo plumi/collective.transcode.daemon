@@ -48,6 +48,7 @@ setup(name='collective.transcode.daemon',
           # -*- Extra requirements: -*-
           'pycrypto',
           'Twisted',
+          'pyasn1',
       ],
       entry_points="""
       # -*- Entry points: -*-

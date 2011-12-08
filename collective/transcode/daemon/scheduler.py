@@ -28,7 +28,7 @@ Based on Darksnow ConvertDaemon by Jean-Nicolas Bès <jean.nicolas.bes@darksnow.
 #
 
 
-import time, os
+import time, os, fcntl
 from hashlib import sha1 as sha
 from Queue import Queue
 import urllib
@@ -40,6 +40,22 @@ threadable.init(1)
 from twisted.internet.defer import Deferred
 import sys, datetime, tempfile
 from subprocess import Popen, PIPE, STDOUT
+
+
+def getDuration(lines):
+    """ Get the original file's duration by parsing ffmpeg transcode job output"""
+    for line in lines:
+        if line.find('Duration') != -1:
+            duration = line[line.find('Duration'):].split(',')[0].split(':')[1:]
+            return int(duration[0])*3600+int(duration[1])*60+int(float(duration[2]))
+    return 0
+
+def getComplete(lines, duration):
+    """ Get ffmpeg transcoding job completion progress, given the duration """
+    for line in lines:
+        if line.rfind('time=') != -1:
+            time = line[line.rfind('time='):].split(' ')[0].split('=')[1].split(':')
+            return (int(time[0])*3600+int(time[1])*60+int(float(time[2])))*100/duration
 
 
 class Job(dict):
@@ -138,13 +154,50 @@ class JobSched:
                 job.cmd = job.profile['cmd'] % (filename, job.output['path']) 
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
-                p = Popen(job.cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
-                ret = os.waitpid(p.pid, 0)[1]
+                p = Popen(job.cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+                fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+                ret = None
+                i = 0
+                job.duration = 0
+                job.complete = 0
+                while ret is None:
+                    lines = []
+                    try:                        
+                        lines+=p.stdout.read().split('\r')
+                        lines+=p.stderr.read().split('\r')
+                    except:
+                        pass
+                    if job.duration == 0 and lines:
+                        job.duration = getDuration(lines)
+                        print "duration %s" % job.duration
+                    if job.duration:
+                        complete = getComplete(lines, job.duration)
+                        if complete == job.complete:
+                            i+=1
+                            print "no transcoding progress for %d cycles" % i
+                        else:
+                            job.complete = complete
+                            i = 0
+                        print "%s%% complete" % complete
+                    elif lines:
+                        print "No duration found in lines: %s" % '\n'.join(lines)
+                        
+                    if i > 5: # for 5 cycles the transcoded has not progressed
+                        p.kill()
+                        ret = 1
+                        raise Exception("Killed child process that stopped transcoding for 15 or more seconds: %s" % job.cmd)
+                    time.sleep(2)
+                    ret = p.poll()
+
                 os.remove(filename)
-                errorMessage = p.stderr.read()
+                errorMessage = '\n'.join(lines)
             except Exception as e:
                 errorMessage = e.message
                 print "EXCEPTION %s CAUGHT FOR %r" % (e, job)
+                try :
+                    os.remove(filename)
+                except:
+                    pass
                 
             print "Transcoder returned", ret, job.output
  
