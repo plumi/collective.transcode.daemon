@@ -68,6 +68,9 @@ class TranscodeDaemon(JobSched):
         self.launchHttp(application)
         reactor.callInThread(self.run)
         print "Launched TranscodeDaemon scheduler thread...."
+        
+        # Comment out the following to enable a Twisted SSH Manhole for debugging
+        """
         from twisted.cred import portal, checkers 
         from twisted.conch import manhole, manhole_ssh 
         
@@ -81,6 +84,7 @@ class TranscodeDaemon(JobSched):
             f = manhole_ssh.ConchFactory(p)
             return f        
         reactor.listenTCP(2222, getManholeFactory({'self': self}))
+        """
     
     def launchHttp(self, application):
         root = TranscodeWebRoot()

@@ -41,6 +41,8 @@ from twisted.internet.defer import Deferred
 import sys, datetime, tempfile
 from subprocess import Popen, PIPE, STDOUT
 
+IDLE_CYCLES_LIMIT = 30
+SLEEP_CYCLE = 2
 
 def getDuration(lines):
     """ Get the original file's duration by parsing ffmpeg transcode job output"""
@@ -182,11 +184,11 @@ class JobSched:
                     elif lines:
                         print "No duration found in lines: %s" % '\n'.join(lines)
                         
-                    if i > 5: # for 5 cycles the transcoded has not progressed
-                        p.kill()
+                    if i > IDLE_CYCLES_LIMIT: # if the transcoded has not progressed
+                        os.kill(p.pid, 9)
                         ret = 1
-                        raise Exception("Killed child process that stopped transcoding for 15 or more seconds: %s" % job.cmd)
-                    time.sleep(2)
+                        raise Exception("Killed child process that stopped transcoding for more than %d seconds: %s" % (IDLE_CYCLES_LIMIT * SLEEP_CYCLE, job.cmd))
+                    time.sleep(SLEEP_CYCLE)
                     ret = p.poll()
 
                 os.remove(filename)
