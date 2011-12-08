@@ -28,7 +28,7 @@ Based on Darksnow ConvertDaemon by Jean-Nicolas Bès <jean.nicolas.bes@darksnow.
 #
 
 
-import time, os, fcntl
+import time, os, fcntl, signal
 from hashlib import sha1 as sha
 from Queue import Queue
 import urllib
@@ -156,7 +156,7 @@ class JobSched:
                 job.cmd = job.profile['cmd'] % (filename, job.output['path']) 
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
-                p = Popen(job.cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+                Popen(job.cmd.split(' '), stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, preexec_fn = os.setsid )
                 fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
                 ret = None
                 i = 0
@@ -185,7 +185,7 @@ class JobSched:
                         print "No duration found in lines: %s" % '\n'.join(lines)
                         
                     if i > IDLE_CYCLES_LIMIT: # if the transcoded has not progressed
-                        os.kill(p.pid, 9)
+                        os.killpg(p.pid, signal.SIGTERM)
                         ret = 1
                         raise Exception("Killed child process that stopped transcoding for more than %d seconds: %s" % (IDLE_CYCLES_LIMIT * SLEEP_CYCLE, job.cmd))
                     time.sleep(SLEEP_CYCLE)
