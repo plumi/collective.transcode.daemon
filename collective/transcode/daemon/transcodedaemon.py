@@ -47,7 +47,10 @@ class TranscodeDaemon(JobSched):
 
     @property
     def root(self):
-        return os.environ["TRANSCODEDAEMON_ROOT"]
+        if "TRANSCODEDAEMON_ROOT" in os.environ.keys():
+            return os.environ["TRANSCODEDAEMON_ROOT"]
+        else:
+            return os.getcwd()
     
     def rel(self, path):
         return os.path.join(self.root, path.lstrip('/'))
@@ -55,9 +58,11 @@ class TranscodeDaemon(JobSched):
     def __init__(self, application):
         print "Initializing"
         JobSched.__init__(self)
-
-        import imp
-        config = imp.load_source('config',self.rel("config.py"))
+        try:
+            import imp
+            config = imp.load_source('config',self.rel("config.py"))
+        except:
+            from collective.transcode.daemon import config
         self.config = {}
         self.config['profiles'] = eval(config.profiles)
         self.config['listen_host'] = config.listen_host
@@ -101,8 +106,8 @@ class TranscodeDaemon(JobSched):
             self.stop(stopReactor=False)
         site.stopFactory = myStopFact
         
-        s = strports.service('tcp:%s:interface=%s' % (port, host), site)
-        s.setServiceParent(application)
+        self.service = strports.service('tcp:%s:interface=%s' % (port, host), site)
+        self.service.setServiceParent(application)
         print "Launched http channel"
   
     def stop(self, stopReactor = True):

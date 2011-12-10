@@ -135,11 +135,9 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         return self.master.queue.qsize()
     
     def xmlrpc_stat(self, UJId):
-        return "ok"
-    
-    def xmlrpc_stop(self):
-        reactor.callLater(0.1, self.master.stop)
-        return True
+        if unhex(UJId) not in self.master.job.keys():
+            return
+        return self.master.job[unhex(UJId)].complete
     
     def xmlrpc_cancel(self, UJId):
         self.master.delJob(UJId)
@@ -148,9 +146,7 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
     def callback(self, ret, job):
         print "callback return for jobId %s profile %s is %s" %(b64encode(job.UJId), job.profile['id'],ret)
         cbUrl = job['callbackURL']
-        if not cbUrl.endswith('/'):
-            cbUrl+='/'
-        server = xmlrpclib.Server(cbUrl)
+
         if ret.__class__ is str:
             vals = ret.split()
             path = vals[0] == 'SUCCESS' and vals[1] or ''
@@ -167,5 +163,11 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
                   'msg' : ret,
               }
         output = { 'key' : b64encode(encrypt(str(key), self.master.config['secret'])) }
-        server.transcode_callback(output)
-        return True
+        if cbUrl:
+            if not cbUrl.endswith('/'):
+                cbUrl+='/'            
+            server = xmlrpclib.Server(cbUrl)        
+            server.transcode_callback(output)
+            return True
+        else:
+            return output

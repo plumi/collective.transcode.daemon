@@ -68,6 +68,8 @@ class Job(dict):
         self.options = options
         self.profile = profile
         self.defer = Deferred()
+        self.duration = 0
+        self.complete = 0        
         for key,value in kwargs.items():
             self[key] = value
 
@@ -156,12 +158,10 @@ class JobSched:
                 job.cmd = job.profile['cmd'] % (filename, job.output['path']) 
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
-                Popen(job.cmd.split(' '), stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, preexec_fn = os.setsid )
+                p = Popen(job.cmd.split(' '), stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, preexec_fn = os.setsid )
                 fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
                 ret = None
                 i = 0
-                job.duration = 0
-                job.complete = 0
                 while ret is None:
                     lines = []
                     try:                        
@@ -202,10 +202,16 @@ class JobSched:
                     pass
                 
             print "Transcoder returned", ret, job.output
- 
+            
             if ret == 0: 
                 retPath = job.output['path']
-                reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
+                if job['callbackURL']:
+                    reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
+                else:
+                    job.defer.callback('SUCCESS ' + retPath)
             else:
-                reactor.callFromThread(job.defer.errback, failure.Failure(Exception(errorMessage)))
+                if job['callbackURL']:
+                    reactor.callFromThread(job.defer.errback, failure.Failure(Exception(errorMessage)))
+                else:
+                    job.defer.errback('ERROR ' + errorMessage)
            

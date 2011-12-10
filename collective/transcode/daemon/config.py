@@ -20,13 +20,26 @@ default_supported_mimetypes = ['application/ogg',
                                 'video/webm',
                                 ]
 
-profiles = [
-        {'id': 'low',
-         'cmd': 'ffmpeg -y -i %s -s 424x344 -qscale 5.0 -r 30 -ar 44100 -f flv %s',
-         'supported_mime_types': default_supported_mimetypes,
-        },
-        {'id' : 'high',
-         'cmd' : 'ffmpeg -y -i %s -s 640x480 -qscale 5.0 -r 50 -ar 44100 -f flv %s',
-         'supported_mime_types': default_supported_mimetypes,
-        }
-       ]
+profiles = str([            
+            {'id': 'jpeg',
+             'cmd': './scripts/jpeg %s %s',
+             'supported_mime_types': default_supported_mimetypes,
+             'output_mime_type': 'image/jpeg',
+             'output_extension': 'jpg' },
+            {'id': 'mp4-high',
+             'cmd': './scripts/mp4-high %s %s',
+             'supported_mime_types': default_supported_mimetypes,
+             'output_mime_type': 'video/mp4', 'output_extension': 'mp4' },
+            {'id': 'mp4-low',
+             'cmd': './scripts/mp4-low %s %s',
+             'supported_mime_types': default_supported_mimetypes,
+             'output_mime_type': 'video/mp4', 'output_extension': 'mp4' },
+            {'id': './webm-high',
+             'cmd': 'scripts/webm-high %s %s',
+             'supported_mime_types': default_supported_mimetypes,
+             'output_mime_type': 'video/webm', 'output_extension': 'webm' },
+            {'id': './webm-low',
+             'cmd': 'scripts/webm-low %s %s',
+             'supported_mime_types': default_supported_mimetypes,
+             'output_mime_type': 'video/webm', 'output_extension': 'webm' },
+            ])
