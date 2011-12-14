@@ -190,7 +190,7 @@ class JobSched:
                         raise Exception("Killed child process that stopped transcoding for more than %d seconds: %s" % (IDLE_CYCLES_LIMIT * SLEEP_CYCLE, job.cmd))
                     time.sleep(SLEEP_CYCLE)
                     ret = p.poll()
-
+                job.complete = 100
                 os.remove(filename)
                 errorMessage = '\n'.join(lines)
             except Exception as e:

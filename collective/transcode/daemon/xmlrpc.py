@@ -42,18 +42,8 @@ from crypto import decrypt, encrypt
 import os.path
 from urlparse import urlparse
 import shutil
+from binascii import unhexlify, hexlify
 
-def hex(bytes):
-    hexbytes = ""
-    for c in bytes:
-        hexbytes += "%02x" % ord(c)
-    return hexbytes
-
-def unhex(hexbytes):
-    bytes = ""
-    for i in xrange(len(hexbytes)/2):
-        bytes+= "%c" % int(hexbytes[i*2:i*2+2])
-    return bytes
 
 class XMLRPCConvert(xmlrpc.XMLRPC):
     
@@ -99,7 +89,7 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         if not jobid:
             return "ERROR: couldn't get a jobid"
         if callbackURL:
-            return hex(jobid)
+            return hexlify(jobid)
         else:
             return job.defer
 
@@ -135,9 +125,9 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         return self.master.queue.qsize()
     
     def xmlrpc_stat(self, UJId):
-        if unhex(UJId) not in self.master.job.keys():
+        if unhexlify(UJId) not in self.master.job.keys():
             return
-        return self.master.job[unhex(UJId)].complete
+        return self.master.job[unhexlify(UJId)].complete
     
     def xmlrpc_cancel(self, UJId):
         self.master.delJob(UJId)
