@@ -57,7 +57,7 @@ def getComplete(lines, duration):
     for line in lines:
         if line.rfind('time=') != -1:
             time = line[line.rfind('time='):].split(' ')[0].split('=')[1].split(':')
-            return (int(time[0])*3600+int(time[1])*60+int(float(time[2])))*100/duration
+            return (int(time[0])*3600+int(time[1])*60+int(float(time[2].replace('-',''))))*100/duration
 
 
 class Job(dict):
