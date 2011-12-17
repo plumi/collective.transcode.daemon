@@ -1,3 +1,17 @@
+0.9 (2011-12-17)
+----------------
+
+- fix negative time bug [mgogoulos]
+- add tests [dimo]
+- track transcode progress [dimo]
+- add ffmpeg to daemon buildout [dimo]
+- update dependencies [dimo, cpsaltis]
+- improve error handling  [dimo]
+- nicer buildout formatting [cpsaltis]
+- set video/webm as default content-type in videofolder [dimo]
+- updated default transcode scripts [dimo, cpsaltis]
+- moved to github [garbas]
+
 0.8 (2010-05-10)
 ----------------
 
