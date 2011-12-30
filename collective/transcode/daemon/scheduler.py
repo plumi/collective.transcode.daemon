@@ -47,8 +47,8 @@ SLEEP_CYCLE = 2
 def getDuration(lines):
     """ Get the original file's duration by parsing ffmpeg transcode job output"""
     for line in lines:
-        if line.find('Duration') != -1:
-            duration = line[line.find('Duration'):].split(',')[0].split(':')[1:]
+        if line.find('Duration:') != -1:
+            duration = line[line.find('Duration:'):].split(',')[0].split(':')[1:]
             return int(duration[0])*3600+int(duration[1])*60+int(float(duration[2]))
     return 0
 
