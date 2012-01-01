@@ -42,7 +42,7 @@ import sys, datetime, tempfile
 from subprocess import Popen, PIPE, STDOUT
 
 IDLE_CYCLES_LIMIT = 30
-SLEEP_CYCLE = 2
+SLEEP_CYCLE = 4
 
 def getDuration(lines):
     """ Get the original file's duration by parsing ffmpeg transcode job output"""
