@@ -1,3 +1,10 @@
+0.10 (2012-01-05)
+-----------------
+
+- fix getDuration [dimo]
+- add video/x-matroska to supported mimetypes [dimo]
+- increase sleep cycle [dimo]
+
 0.9 (2011-12-17)
 ----------------
 
