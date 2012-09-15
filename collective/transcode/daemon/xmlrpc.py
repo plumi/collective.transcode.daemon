@@ -107,9 +107,11 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
          # basic filename checking
         input['path'] = input['path'].replace(' ', '-')
         input['path'] = input['path'].replace('%20', '-')
+        input['path'] = input['path'].replace('%23', '#')
         input['path'] = input['path'].replace('"', '')
         input['fileName'] = input['fileName'].replace(' ', '-')
         input['fileName'] = input['fileName'].replace('%20', '-')
+        input['fileName'] = input['fileName'].replace('%23', '#')
         input['fileName'] = input['fileName'].replace('"', '')
 
         parsedURL = urlparse(input['path'])

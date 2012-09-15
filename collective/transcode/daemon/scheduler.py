@@ -76,9 +76,11 @@ class Job(dict):
         # basic filename checking
         input['path'] = input['path'].replace(' ', '-')
         input['path'] = input['path'].replace('%20', '-')
+        input['path'] = input['path'].replace('%23', '#')
         input['path'] = input['path'].replace('"', '')
         input['fileName'] = input['fileName'].replace(' ', '-')
         input['fileName'] = input['fileName'].replace('%20', '-')
+        input['fileName'] = input['fileName'].replace('%23', '#')
         input['fileName'] = input['fileName'].replace('"', '')
 
         #This cleans up unsavoury characters from the path name. A video coming
