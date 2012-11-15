@@ -57,7 +57,10 @@ def getComplete(lines, duration):
     for line in lines:
         if line.rfind('time=') != -1:
             time = line[line.rfind('time='):].split(' ')[0].split('=')[1].split(':')
-            return (int(time[0])*3600+int(time[1])*60+int(float(time[2].replace('-',''))))*100/duration
+            return (int(time[0])*3600 +
+                    int(time[1])*60 +
+                    int(float(time[2].replace('-','')))
+                    )*100/duration
 
 
 class Job(dict):
@@ -155,12 +158,15 @@ class JobSched:
 
             try:
                 print "DOWNLOADING %s" % url
+                import socket
+                socket.setdefaulttimeout(30)                
                 (filename, response) = urllib.urlretrieve(url) 
                 #TODO - check file was retrieved successfully
                 job.cmd = job.profile['cmd'] % (filename, job.output['path']) 
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
-                p = Popen(job.cmd.split(' '), stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, preexec_fn = os.setsid )
+                p = Popen(job.cmd.split(' '), stdin=PIPE, stdout=PIPE, 
+                          stderr=STDOUT, close_fds=True, preexec_fn = os.setsid)
                 fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
                 ret = None
                 i = 0
@@ -208,12 +214,14 @@ class JobSched:
             if ret == 0: 
                 retPath = job.output['path']
                 if job['callbackURL']:
-                    reactor.callFromThread(job.defer.callback, 'SUCCESS ' + retPath)
+                    reactor.callFromThread(job.defer.callback, 'SUCCESS ' + 
+                                           retPath)
                 else:
                     job.defer.callback('SUCCESS ' + retPath)
             else:
                 if job['callbackURL']:
-                    reactor.callFromThread(job.defer.errback, failure.Failure(Exception(errorMessage)))
+                    reactor.callFromThread(job.defer.errback, 
+                                           failure.Failure(Exception(errorMessage)))
                 else:
                     job.defer.errback('ERROR ' + errorMessage)
            
