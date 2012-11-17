@@ -4,6 +4,7 @@
  - fix stripping of '#' in file paths [mgogoulos]
  - add timeout for urlretrieve [dimo]
  - add yasm in ffmpeg buildout [dimo]
+ - update ffmpeg & transcode scripts [dimo]
 
 0.10 (2012-01-05)
 -----------------
