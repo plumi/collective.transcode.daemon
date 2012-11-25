@@ -159,7 +159,7 @@ class JobSched:
             try:
                 print "DOWNLOADING %s" % url
                 import socket
-                socket.setdefaulttimeout(30)                
+                socket.setdefaulttimeout(150)                
                 (filename, response) = urllib.urlretrieve(url) 
                 #TODO - check file was retrieved successfully
                 job.cmd = job.profile['cmd'] % (filename, job.output['path']) 
