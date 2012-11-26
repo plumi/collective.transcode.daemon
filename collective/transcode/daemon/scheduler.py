@@ -28,7 +28,7 @@ Based on Darksnow ConvertDaemon by Jean-Nicolas Bès <jean.nicolas.bes@darksnow.
 #
 
 
-import time, os, fcntl, signal
+import time, os, fcntl, signal, socket
 from hashlib import sha1 as sha
 from Queue import Queue
 import urllib
@@ -158,10 +158,10 @@ class JobSched:
 
             try:
                 print "DOWNLOADING %s" % url
-                import socket
-                socket.setdefaulttimeout(30)                
+                socket.setdefaulttimeout(150)
                 (filename, response) = urllib.urlretrieve(url) 
                 #TODO - check file was retrieved successfully
+                print "content length: %s" % response.get('content-length',None)
                 job.cmd = job.profile['cmd'] % (filename, job.output['path']) 
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
@@ -170,16 +170,25 @@ class JobSched:
                 fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
                 ret = None
                 i = 0
+                lines = []
                 while ret is None:
-                    lines = []
+                    # wait for process to do stuff
+                    time.sleep(SLEEP_CYCLE)
+
+                    # get it's output
                     try:                        
                         lines+=p.stdout.read().split('\r')
+                    except:
+                        pass
+                    try:
                         lines+=p.stderr.read().split('\r')
                     except:
                         pass
+
                     if job.duration == 0 and lines:
                         job.duration = getDuration(lines)
                         print "duration %s" % job.duration
+
                     if job.duration:
                         complete = getComplete(lines, job.duration)
                         if complete == job.complete:
@@ -196,7 +205,6 @@ class JobSched:
                         os.killpg(p.pid, signal.SIGTERM)
                         ret = 1
                         raise Exception("Killed child process that stopped transcoding for more than %d seconds: %s" % (IDLE_CYCLES_LIMIT * SLEEP_CYCLE, job.cmd))
-                    time.sleep(SLEEP_CYCLE)
                     ret = p.poll()
                 job.complete = 100
                 os.remove(filename)
