@@ -158,7 +158,7 @@ class JobSched:
 
             try:
                 print "DOWNLOADING %s" % url
-                socket.setdefaulttimeout(150)
+                socket.setdefaulttimeout(150)                
                 (filename, response) = urllib.urlretrieve(url) 
                 #TODO - check file was retrieved successfully
                 print "content length: %s" % response.get('content-length',None)
