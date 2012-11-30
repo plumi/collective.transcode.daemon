@@ -157,12 +157,7 @@ class JobSched:
             ret = 1
 
             try:
-                print "DOWNLOADING %s" % url
-                socket.setdefaulttimeout(150)                
-                (filename, response) = urllib.urlretrieve(url) 
-                #TODO - check file was retrieved successfully
-                print "content length: %s" % response.get('content-length',None)
-                job.cmd = job.profile['cmd'] % (filename, job.output['path']) 
+                job.cmd = job.profile['cmd'] % (url, job.output['path']) 
                 print "RUNNING: %s" % job.cmd
                 os.umask(0)
                 p = Popen(job.cmd.split(' '), stdin=PIPE, stdout=PIPE, 
@@ -170,8 +165,8 @@ class JobSched:
                 fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
                 ret = None
                 i = 0
-                lines = []
                 while ret is None:
+                    lines = []
                     # wait for process to do stuff
                     time.sleep(SLEEP_CYCLE)
 
@@ -207,15 +202,10 @@ class JobSched:
                         raise Exception("Killed child process that stopped transcoding for more than %d seconds: %s" % (IDLE_CYCLES_LIMIT * SLEEP_CYCLE, job.cmd))
                     ret = p.poll()
                 job.complete = 100
-                os.remove(filename)
                 errorMessage = '\n'.join(lines)
             except Exception as e:
                 errorMessage = e.message
                 print "EXCEPTION %s CAUGHT FOR %r" % (e, job)
-                try :
-                    os.remove(filename)
-                except:
-                    pass
                 
             print "Transcoder returned", ret, job.output
             
