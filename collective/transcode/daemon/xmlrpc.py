@@ -84,11 +84,6 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
             return "ERROR: Unsupported mimetype %s. Profile %s supports only %s" % (input['type'], profileId, profile['supported_mime_types'])
         output = {}
 
-        ### UGLY PATCH for em.org !!!
-        input['url'] = input['url'].replace('http://localhost:8021/Zope2/plumi','https://www.engagemedia.org')
-        callbackURL = callbackURL.replace('http://localhost:8021/Zope2/plumi','https://www.engagemedia.org')
-        ### /UGLY PATCH for em.org !!!
-
         job = Job(input, output, profile, options, callbackURL=callbackURL, videofolder=self.master.config['videofolder'], fieldName=fieldName)
         job.defer.addBoth(self.callback, job)
         jobid = self.master.addjob(job)
