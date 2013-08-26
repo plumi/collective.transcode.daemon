@@ -1,6 +1,8 @@
 import zlib
 import struct
 from Crypto.Cipher import AES
+from Crypto import Random
+
 
 class CheckSumError(Exception):
     pass
@@ -23,12 +25,13 @@ def encrypt(plaintext, secret, lazy=True, checksum=True):
     if lazy:
         secret = _lazysecret(secret) 
 
-    encobj = AES.new(secret, AES.MODE_CFB)
+    iv = Random.new().read(AES.block_size)
+    encobj = AES.new(secret, AES.MODE_CFB, iv)
 
     if checksum:
         plaintext += struct.pack("i", zlib.crc32(plaintext))
 
-    return encobj.encrypt(plaintext)
+    return iv + encobj.encrypt(plaintext)
 
 def decrypt(ciphertext, secret, lazy=True, checksum=True):
     """decrypt ciphertext with secret
@@ -41,7 +44,9 @@ def decrypt(ciphertext, secret, lazy=True, checksum=True):
 
     if lazy:
         secret = _lazysecret(secret)
-    encobj = AES.new(secret, AES.MODE_CFB)
+
+    (iv, ciphertext) = (ciphertext[:16], ciphertext[16:])
+    encobj = AES.new(secret, AES.MODE_CFB, iv)
     plaintext = encobj.decrypt(ciphertext)
 
     if checksum:
