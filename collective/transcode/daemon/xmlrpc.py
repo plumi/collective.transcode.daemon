@@ -75,7 +75,13 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
             if profileId == 'dvd':
                 input['url'] = input['path']
             else:
-                input['url'] = input['url'] + '?' + urllib.urlencode({'key' : b64encode(encrypt(str((input['uid'],input['fieldName'],profileId)),self.master.config['secret']))})
+                input['url'] = input['url'] + '?' + urllib.urlencode({
+                        'key' : b64encode(encrypt(str((
+                                        input['uid'],
+                                        input['fieldName'],
+                                        profileId)),
+                                                  self.master.config['secret']))
+                        })
         except Exception, e:
             log.error("Invalid transcode request: %s" % e)
             return "ERROR: Unauthorized"

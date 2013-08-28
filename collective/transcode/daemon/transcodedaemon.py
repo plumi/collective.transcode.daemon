@@ -46,6 +46,11 @@ class TranscodeWebRoot(resource.Resource):
         return "OK!"
 
 
+class FileNoListing(static.File):
+    def directoryListing(self):
+        return resource.ForbiddenResource()
+
+
 class TranscodeDaemon(JobSched):
 
     @property
@@ -64,7 +69,7 @@ class TranscodeDaemon(JobSched):
         JobSched.__init__(self)
         try:
             import imp
-            config = imp.load_source('config',self.rel("config.py"))
+            config = imp.load_source('config', self.rel("config.py"))
         except:
             from collective.transcode.daemon import config
         self.config = {}
@@ -99,7 +104,9 @@ class TranscodeDaemon(JobSched):
         root = TranscodeWebRoot()
         root.putChild('', root)
         root.putChild('RPC2', XMLRPCConvert(self))
-        root.putChild(self.config['videofolder'], static.File(self.config['videofolder'], defaultType='video/webm'))
+        root.putChild(self.config['videofolder'],
+                      FileNoListing(self.config['videofolder'],
+                                    defaultType='video/webm'))
         host = self.config['listen_host'].encode('ascii')
         port = self.config['listen_port'].encode('ascii')
         site = server.Site(root)
