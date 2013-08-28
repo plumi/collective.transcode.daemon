@@ -28,21 +28,31 @@ Based on Darksnow ConvertDaemon by Jean-Nicolas Bès <jean.nicolas.bes@darksnow.
 #
 
 
-import time, os, fcntl, signal, socket
+import datetime
+import fcntl
 from hashlib import sha1 as sha
-from Queue import Queue
+import logging
+import os
+import sys
+import signal
+import socket
+import tempfile
+import time
 import urllib
 from urlparse import urlparse
 
+from Queue import Queue
+from subprocess import Popen, PIPE, STDOUT
 from twisted.internet import reactor
 from twisted.python import threadable, failure
-threadable.init(1)
 from twisted.internet.defer import Deferred
-import sys, datetime, tempfile
-from subprocess import Popen, PIPE, STDOUT
 
+threadable.init(1)
+
+log = logging.getLogger('collective.transcode')
 IDLE_CYCLES_LIMIT = 30
 SLEEP_CYCLE = 4
+
 
 def getDuration(lines):
     """ Get the original file's duration by parsing ffmpeg transcode job output"""
@@ -72,7 +82,7 @@ class Job(dict):
         self.profile = profile
         self.defer = Deferred()
         self.duration = 0
-        self.complete = 0        
+        self.complete = 0
         for key,value in kwargs.items():
             self[key] = value
 
@@ -111,7 +121,7 @@ class Job(dict):
         basename = '.'.join(fileName.split('.')[:-1]) or fileName
         outFile = path + '/' + basename + '.' + profile['output_extension']
         self.output = dict(path = outFile, type = profile['output_mime_type'])
-                
+
     def __repr__(self):
         return "<Job input=%r ouput=%r options=%r %s" % (
             self.input,
@@ -121,26 +131,26 @@ class Job(dict):
         )
 
 class JobSched:
-  
+
     def __init__(self):
         self.queue = Queue()
         self.job = {}
-    
+
     def genUJId(self):
         return sha(str(time.time())).digest()
-    
+
     def addjob(self,job):
         UJId = self.genUJId()
         self.job[UJId] = job
         job.UJId = UJId
         self.queue.put(job)
         return UJId
-    
+
     def delJob(UJId):
         del self.job[UJId]
-    
+
     def run(self):
-        print "Scheduler thread running"
+        log.info("Scheduler thread running")
         self.running = True
         while self.running:
             try:
@@ -148,19 +158,19 @@ class JobSched:
             except:
                 continue
             if job is None or job.UJId not in self.job:
-                print "ERROR the job doesn't exist"
+                log.error("the job doesn't exist")
                 continue
 
-            print "New job"
+            log.info("New job")
             url = job.input['url']
 
             ret = 1
 
             try:
-                job.cmd = job.profile['cmd'] % (url, job.output['path']) 
-                print "RUNNING: %s" % job.cmd
+                job.cmd = job.profile['cmd'] % (url, job.output['path'])
+                log.info("RUNNING: %s" % job.cmd)
                 os.umask(0)
-                p = Popen(job.cmd.split(' '), stdin=PIPE, stdout=PIPE, 
+                p = Popen(job.cmd.split(' '), stdin=PIPE, stdout=PIPE,
                           stderr=STDOUT, close_fds=True, preexec_fn = os.setsid)
                 fcntl.fcntl(p.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
                 ret = None
@@ -171,7 +181,7 @@ class JobSched:
                     time.sleep(SLEEP_CYCLE)
 
                     # get it's output
-                    try:                        
+                    try:
                         lines+=p.stdout.read().split('\r')
                     except:
                         pass
@@ -182,20 +192,20 @@ class JobSched:
 
                     if job.duration == 0 and lines:
                         job.duration = getDuration(lines)
-                        print "duration %s" % job.duration
+                        log.info("duration %s" % job.duration)
 
                     if job.duration:
                         complete = getComplete(lines, job.duration)
                         if complete == job.complete:
                             i+=1
-                            print "no transcoding progress for %d cycles" % i
+                            log.info("no transcoding progress for %d cycles" % i)
                         else:
                             job.complete = complete
                             i = 0
-                        print "%s%% complete" % complete
+                        log.info("%s%% complete" % complete)
                     elif lines:
-                        print "No duration found in lines: %s" % '\n'.join(lines)
-                        
+                        log.warn("No duration found in lines: %s" % '\n'.join(lines))
+
                     if i > IDLE_CYCLES_LIMIT: # if the transcoded has not progressed
                         os.killpg(p.pid, signal.SIGTERM)
                         ret = 1
@@ -205,21 +215,21 @@ class JobSched:
                 errorMessage = '\n'.join(lines)
             except Exception as e:
                 errorMessage = e.message
-                print "EXCEPTION %s CAUGHT FOR %r" % (e, job)
-                
-            print "Transcoder returned", ret, job.output
-            
-            if ret == 0: 
+                log.error("EXCEPTION %s CAUGHT FOR %r" % (e, job))
+
+            log.info("Transcoder returned %s %s" % (ret, job.output))
+
+            if ret == 0:
                 retPath = job.output['path']
                 if job['callbackURL']:
-                    reactor.callFromThread(job.defer.callback, 'SUCCESS ' + 
+                    reactor.callFromThread(job.defer.callback, 'SUCCESS ' +
                                            retPath)
                 else:
                     job.defer.callback('SUCCESS ' + retPath)
             else:
                 if job['callbackURL']:
-                    reactor.callFromThread(job.defer.errback, 
+                    reactor.callFromThread(job.defer.errback,
                                            failure.Failure(Exception(errorMessage)))
                 else:
                     job.defer.errback('ERROR ' + errorMessage)
-           
+

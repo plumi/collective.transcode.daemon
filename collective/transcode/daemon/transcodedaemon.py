@@ -27,6 +27,7 @@ Copyright (c) 2009 unweb.me.
 
 """
 
+import logging
 import os
 
 from twisted.application import strports, service
@@ -36,12 +37,14 @@ from twisted.internet import reactor
 from collective.transcode.daemon.xmlrpc import XMLRPCConvert
 from collective.transcode.daemon.scheduler import JobSched
 
+log = logging.getLogger('collective.transcode')
 application = service.Application("TranscodeDaemon")
+
 
 class TranscodeWebRoot(resource.Resource):
     def render(self, request):
         return "OK!"
-    
+
 
 class TranscodeDaemon(JobSched):
 
@@ -51,12 +54,13 @@ class TranscodeDaemon(JobSched):
             return os.environ["TRANSCODEDAEMON_ROOT"]
         else:
             return os.getcwd()
-    
+
     def rel(self, path):
         return os.path.join(self.root, path.lstrip('/'))
-    
+
     def __init__(self, application):
-        print "Initializing"
+        logging.basicConfig(level=logging.INFO)
+        log.info("Initializing")
         JobSched.__init__(self)
         try:
             import imp
@@ -72,25 +76,25 @@ class TranscodeDaemon(JobSched):
 
         self.launchHttp(application)
         reactor.callInThread(self.run)
-        print "Launched TranscodeDaemon scheduler thread...."
-        
+        log.info("Launched TranscodeDaemon scheduler thread....")
+
         # Comment out the following to enable a Twisted SSH Manhole for debugging
         """
-        from twisted.cred import portal, checkers 
-        from twisted.conch import manhole, manhole_ssh 
-        
+        from twisted.cred import portal, checkers
+        from twisted.conch import manhole, manhole_ssh
+
         def getManholeFactory(namespace):
             realm = manhole_ssh.TerminalRealm()
-            def getManhole(_): 
-                return manhole.Manhole(namespace) 
+            def getManhole(_):
+                return manhole.Manhole(namespace)
             realm.chainedProtocolFactory.protocolFactory = getManhole
             p = portal.Portal(realm)
             p.registerChecker(checkers.InMemoryUsernamePasswordDatabaseDontUse(admin='foobar'))
             f = manhole_ssh.ConchFactory(p)
-            return f        
+            return f
         reactor.listenTCP(2222, getManholeFactory({'self': self}))
         """
-    
+
     def launchHttp(self, application):
         root = TranscodeWebRoot()
         root.putChild('', root)
@@ -105,22 +109,20 @@ class TranscodeDaemon(JobSched):
             thyStopFact()
             self.stop(stopReactor=False)
         site.stopFactory = myStopFact
-        
+
         self.service = strports.service('tcp:%s:interface=%s' % (port, host), site)
         self.service.setServiceParent(application)
-        print "Launched http channel"
-  
+        log.info("Launched http channel")
+
     def stop(self, stopReactor = True):
         self.running=False
         self.queue.put(None)
         if stopReactor:
             reactor.stop()
-        print "reactor stopped"
-    
+        log.info("reactor stopped")
+
     def __del__(self):
         if self.running:
             self.stop()
 
 TranscodeDaemon(application)
-
-

@@ -31,43 +31,45 @@ Copyright (c) 2009 unweb.me
 $Id$
 """
 
+from base64 import b64decode, b64encode
+from binascii import unhexlify, hexlify
+import logging
 import os
-import xmlrpclib
+import os.path
 import urllib
+import shutil
+from urlparse import urlparse
+import xmlrpclib
+
+from crypto import decrypt, encrypt
+from scheduler import Job
 from twisted.internet import reactor
 from twisted.web import xmlrpc
-from scheduler import Job
-from base64 import b64decode, b64encode
-from crypto import decrypt, encrypt
-import os.path
-from urlparse import urlparse
-import shutil
-from binascii import unhexlify, hexlify
+
+log = logging.getLogger('collective.transcode')
 
 
 class XMLRPCConvert(xmlrpc.XMLRPC):
-    
     def __init__(self, master):
         self.allowNone = True
         self.master = master
-
         self.useDateTime = False
-    
+
     def xmlrpc_getAvailableProfiles(self):
         ret = [i['id'] for i in self.master.config['profiles']]
-        print ret
+        log.info(ret)
         return ret
 
     def xmlrpc_transcode(self, input, profileId, options, callbackURL, fieldName=''):
         profile = None
         for p in self.master.config['profiles']:
-            if profileId == p['id']: 
-                profile = p        
+            if profileId == p['id']:
+                profile = p
         if not profile:
             return "ERROR: Invalid profile %s" % profileId
 
         try:
-            key = decrypt(b64decode(input['key']), self.master.config['secret']) 
+            key = decrypt(b64decode(input['key']), self.master.config['secret'])
             input = eval(key, {"__builtins__":None},{})
             assert input.__class__ is dict
             if profileId == 'dvd':
@@ -75,9 +77,9 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
             else:
                 input['url'] = input['url'] + '?' + urllib.urlencode({'key' : b64encode(encrypt(str((input['uid'],input['fieldName'],profileId)),self.master.config['secret']))})
         except Exception, e:
-            print "Invalid transcode request: %s" % e
+            log.error("Invalid transcode request: %s" % e)
             return "ERROR: Unauthorized"
-        
+
         #if supported_mime_types is empty, we don't check the mime type
         if len(profile['supported_mime_types']) and \
            input['type'] not in profile['supported_mime_types']:
@@ -94,15 +96,14 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         else:
             return job.defer
 
-
     def xmlrpc_delete(self, input, options, callbackURL, fieldName=''):
         try:
-            key = decrypt(b64decode(input['key']), self.master.config['secret']) 
+            key = decrypt(b64decode(input['key']), self.master.config['secret'])
             input = eval(key, {"__builtins__":None},{})
             assert input.__class__ is dict
             input['url'] = input['url'] + '?' + urllib.urlencode({'key' : b64encode(encrypt(str((input['uid'],input['fieldName'])),self.master.config['secret']))})
         except Exception, e:
-            print "Invalid delete request: %s" % e
+            log.error("Invalid delete request: %s" % e)
             return "ERROR: Unauthorized"
 
          # basic filename checking
@@ -126,18 +127,19 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
 
     def xmlrpc_queueSize(self):
         return self.master.queue.qsize()
-    
+
     def xmlrpc_stat(self, UJId):
         if unhexlify(UJId) not in self.master.job.keys():
             return
         return self.master.job[unhexlify(UJId)].complete
-    
+
     def xmlrpc_cancel(self, UJId):
         self.master.delJob(UJId)
         return True
-    
+
     def callback(self, ret, job):
-        print "callback return for jobId %s profile %s is %s" %(b64encode(job.UJId), job.profile['id'],ret)
+        log.info("callback return for jobId %s profile %s is %s"
+                 % (b64encode(job.UJId), job.profile['id'],ret))
         cbUrl = job['callbackURL']
 
         if ret.__class__ is str:
@@ -146,20 +148,20 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         else:
             path = ''
             ret = ret.getErrorMessage()
-            
-        key = { 
-                  'jobId' : job.UJId,
-                  'UID' : job.input['uid'],
-                  'fieldName' : job.input['fieldName'], 
-                  'profile' : job.profile['id'],
-                  'path' : path,
-                  'msg' : ret,
-              }
+
+        key = {
+            'jobId' : job.UJId,
+            'UID' : job.input['uid'],
+            'fieldName' : job.input['fieldName'],
+            'profile' : job.profile['id'],
+            'path' : path,
+            'msg' : ret,
+            }
         output = { 'key' : b64encode(encrypt(str(key), self.master.config['secret'])) }
         if cbUrl:
             if not cbUrl.endswith('/'):
-                cbUrl+='/'            
-            server = xmlrpclib.Server(cbUrl)        
+                cbUrl+='/'
+            server = xmlrpclib.Server(cbUrl)
             server.transcode_callback(output)
             return True
         else:
