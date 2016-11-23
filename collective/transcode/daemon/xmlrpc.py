@@ -77,6 +77,14 @@ class XMLRPCConvert(xmlrpc.XMLRPC):
         except Exception, e:
             print "Invalid transcode request: %s" % e
             return "ERROR: Unauthorized"
+
+
+        ### UGLY PATCH for em.org !!!
+        input['url'] = input['url'].replace('http://localhost:8021/Zope2/plumi','https://www.engagemedia.org')
+        callbackURL = callbackURL.replace('http://localhost:8021/Zope2/plumi','https://www.engagemedia.org')
+        ### /UGLY PATCH for em.org !!!
+        #if supported_mime_types is empty, we don't check the mime type
+
         
         #if supported_mime_types is empty, we don't check the mime type
         if len(profile['supported_mime_types']) and \
