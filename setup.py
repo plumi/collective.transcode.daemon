@@ -42,6 +42,7 @@ setup(name='collective.transcode.daemon',
       url='https://github.com/plumi/collective.transcode.daemon',
       license='GPL',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      namespace_packages=['collective', 'collective.transcode'],
       include_package_data=True,
       zip_safe=False,
       install_requires=[
